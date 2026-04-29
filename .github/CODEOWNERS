@@ -1,35 +1,40 @@
 # CODEOWNERS — GitHub auto-assigns reviewers based on changed paths
 # Format: <path-pattern> <space> <reviewers>
 # Lower lines override upper lines.
+#
+# Solo-dev mode: every path is owned by @ajays9144.
+# When teams are created on the org (e.g. @kehdo/engineering, @kehdo/api-reviewers,
+# @kehdo/backend-team, etc.), swap @ajays9144 here for the appropriate team handle.
+# The structure below mirrors the original team layout to make that swap mechanical.
 
-# Default: any change requires engineering team review
-*                           @kehdo/engineering
+# Default: any change tags the maintainer
+*                           @ajays9144
 
-# Contract changes affect all platforms — require API reviewers
-/contracts/                 @kehdo/api-reviewers @kehdo/engineering
+# Contract changes affect all platforms — would require API reviewers
+/contracts/                 @ajays9144
 
-# Design tokens affect all platforms — require design reviewers
-/design/                    @kehdo/design-reviewers @kehdo/engineering
+# Design tokens affect all platforms — would require design reviewers
+/design/                    @ajays9144
 
 # Platform-specific code
-/backend/                   @kehdo/backend-team
-/android/                   @kehdo/android-team
-/ios/                       @kehdo/ios-team
-/web/                       @kehdo/web-team
+/backend/                   @ajays9144
+/android/                   @ajays9144
+/ios/                       @ajays9144
+/web/                       @ajays9144
 
-# Infrastructure — require platform team
-/infra/                     @kehdo/platform-team
+# Infrastructure — would require platform team
+/infra/                     @ajays9144
 
-# CI/CD changes need extra eyes
-/.github/                   @kehdo/platform-team @kehdo/tech-leads
+# CI/CD changes need extra eyes — would require platform + tech leads
+/.github/                   @ajays9144
 
 # ADRs need tech lead approval
-/docs/adrs/                 @kehdo/tech-leads
+/docs/adrs/                 @ajays9144
 
-# CLAUDE.md changes require lead review (these encode our conventions)
-**/CLAUDE.md                @kehdo/tech-leads
+# CLAUDE.md changes encode our conventions — would require tech leads
+**/CLAUDE.md                @ajays9144
 
 # Security-sensitive files
-/SECURITY.md                @kehdo/tech-leads
-/backend/auth/              @kehdo/tech-leads @kehdo/backend-team
-/contracts/openapi/         @kehdo/tech-leads @kehdo/api-reviewers
+/SECURITY.md                @ajays9144
+/backend/auth/              @ajays9144
+/contracts/openapi/         @ajays9144
