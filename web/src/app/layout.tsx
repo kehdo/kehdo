@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Instrument_Serif } from "next/font/google";
+import Script from "next/script";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
 import "@/styles/globals.css";
@@ -29,18 +30,17 @@ export const metadata: Metadata = {
       "Drop a chat screenshot, get the perfect reply in seconds. 5 free replies/day, forever.",
     url: "https://kehdo.app",
     siteName: "kehdo",
-    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
     locale: "en_US",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "kehdo — Reply with quiet confidence.",
-    description:
-      "Drop a chat screenshot, get the perfect reply in seconds.",
-    images: ["/og-image.png"],
+    description: "Drop a chat screenshot, get the perfect reply in seconds.",
   },
 };
+
+const PLAUSIBLE_DOMAIN = process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN;
 
 export default function RootLayout({
   children,
@@ -53,6 +53,14 @@ export default function RootLayout({
         <Nav />
         {children}
         <Footer />
+        {PLAUSIBLE_DOMAIN && (
+          <Script
+            defer
+            data-domain={PLAUSIBLE_DOMAIN}
+            src="https://plausible.io/js/script.js"
+            strategy="afterInteractive"
+          />
+        )}
       </body>
     </html>
   );
