@@ -39,9 +39,9 @@ export function WaitlistForm() {
 
   return (
     <form
-      id="waitlist"
       onSubmit={onSubmit}
-      className="mt-12 flex w-full max-w-md flex-col gap-3 sm:flex-row"
+      aria-label="Waitlist signup"
+      className="mt-10 flex w-full max-w-md flex-col gap-3 sm:flex-row"
     >
       <input
         type="email"
