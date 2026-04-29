@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { HowItWorks } from "@/components/HowItWorks";
+import { FinalCta } from "@/components/FinalCta";
 
 export default function Home() {
   return (
@@ -61,7 +63,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* TODO: HowItWorks, Bento, Pricing, Faq, Footer sections to be built per /web/CLAUDE.md */}
+      <HowItWorks />
+      <FinalCta />
+
+      {/* TODO: Features bento, Pricing, FAQ, Privacy, Free-tier, Comparison, Trust signals, Testimonials, Product preview — to be built in subsequent PRs per /web/CLAUDE.md */}
     </main>
   );
 }
