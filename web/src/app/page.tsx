@@ -1,8 +1,13 @@
 import Link from "next/link";
+import { ProductPreview } from "@/components/ProductPreview";
 import { HowItWorks } from "@/components/HowItWorks";
+import { FeaturesBento } from "@/components/FeaturesBento";
 import { Privacy } from "@/components/Privacy";
 import { FreeTierCallout } from "@/components/FreeTierCallout";
 import { Pricing } from "@/components/Pricing";
+import { Testimonials } from "@/components/Testimonials";
+import { Comparison } from "@/components/Comparison";
+import { TrustSignals } from "@/components/TrustSignals";
 import { Faq } from "@/components/Faq";
 import { FinalCta } from "@/components/FinalCta";
 
@@ -67,14 +72,17 @@ export default function Home() {
         </div>
       </section>
 
+      <ProductPreview />
       <HowItWorks />
+      <FeaturesBento />
       <Privacy />
       <FreeTierCallout />
       <Pricing />
+      <Testimonials />
+      <Comparison />
+      <TrustSignals />
       <Faq />
       <FinalCta />
-
-      {/* TODO: ProductPreview, FeaturesBento, Testimonials, Comparison, TrustSignals — slot into spec positions 3, 5, 9, 10, 11 via PR 4 merge per /web/CLAUDE.md */}
     </main>
   );
 }
