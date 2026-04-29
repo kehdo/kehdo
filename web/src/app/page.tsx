@@ -1,4 +1,15 @@
 import Link from "next/link";
+import { ProductPreview } from "@/components/ProductPreview";
+import { HowItWorks } from "@/components/HowItWorks";
+import { FeaturesBento } from "@/components/FeaturesBento";
+import { Privacy } from "@/components/Privacy";
+import { FreeTierCallout } from "@/components/FreeTierCallout";
+import { Pricing } from "@/components/Pricing";
+import { Testimonials } from "@/components/Testimonials";
+import { Comparison } from "@/components/Comparison";
+import { TrustSignals } from "@/components/TrustSignals";
+import { Faq } from "@/components/Faq";
+import { FinalCta } from "@/components/FinalCta";
 
 export default function Home() {
   return (
@@ -61,7 +72,17 @@ export default function Home() {
         </div>
       </section>
 
-      {/* TODO: HowItWorks, Bento, Pricing, Faq, Footer sections to be built per /web/CLAUDE.md */}
+      <ProductPreview />
+      <HowItWorks />
+      <FeaturesBento />
+      <Privacy />
+      <FreeTierCallout />
+      <Pricing />
+      <Testimonials />
+      <Comparison />
+      <TrustSignals />
+      <Faq />
+      <FinalCta />
     </main>
   );
 }
