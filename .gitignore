@@ -1,0 +1,101 @@
+# ============================================================
+# kehdo monorepo — .gitignore
+# ============================================================
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.AppleDouble
+.LSOverride
+
+# --- IDEs ---
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.fleet/
+
+# Xcode
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+DerivedData/
+*.moved-aside
+.swiftpm/
+
+# --- Build outputs ---
+# Gradle (Android + Backend)
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+local.properties
+.kotlin/
+
+# Node (Web + tooling)
+node_modules/
+.next/
+out/
+dist/
+.turbo/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# --- Generated code (OpenAPI, tokens) ---
+# These regenerate on every build — never commit
+android/core/core-network-generated/src/main/java/
+android/core/core-ui/build/generated/tokens/
+ios/Packages/KHNetwork/Sources/Generated/
+ios/Packages/KHDesignSystem/Sources/Tokens/Generated/
+web/src/generated/
+web/src/styles/tokens.generated.css
+backend/contracts-openapi/src/main/java/generated/
+
+# --- Environment & secrets ---
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.p12
+*.mobileprovision
+GoogleService-Info.plist
+google-services.json
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+
+# --- Coverage & reports ---
+coverage/
+*.coverage
+.nyc_output/
+test-results/
+jacoco-report/
+build/reports/
+
+# --- Logs ---
+*.log
+logs/
+
+# --- Terraform ---
+infra/terraform/**/.terraform/
+infra/terraform/**/*.tfstate
+infra/terraform/**/*.tfstate.backup
+infra/terraform/**/*.tfvars
+!infra/terraform/**/*.tfvars.example
+
+# --- Docker ---
+docker-compose.override.yml
+
+# --- Misc ---
+.cache/
+.tmp/
+*.tmp
+*.bak

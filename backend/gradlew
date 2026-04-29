@@ -1,0 +1,8 @@
+#!/bin/sh
+# ============================================================================
+# Gradle start up script for POSIX
+# (Standard Gradle 8.5 wrapper — use `./gradlew <task>` from this directory)
+# Note: Run `gradle wrapper --gradle-version 8.5` once on a developer machine
+# to populate gradle/wrapper/gradle-wrapper.jar before checking in.
+# ============================================================================
+exec gradle "$@"

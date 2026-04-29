@@ -1,0 +1,39 @@
+{
+  "$schema": "../../tools/schemas/typography.schema.json",
+  "version": "1.0.0",
+  "fonts": {
+    "primary": {
+      "family": "Inter",
+      "source": "Google Fonts",
+      "weights": [400, 500, 600, 700, 800, 900],
+      "fallback": "system-ui, -apple-system, sans-serif"
+    },
+    "accent": {
+      "family": "Instrument Serif",
+      "source": "Google Fonts",
+      "weights": [400],
+      "italic": true,
+      "fallback": "Georgia, serif",
+      "usage": "Gradient italic accents in headlines only"
+    },
+    "mono": {
+      "family": "JetBrains Mono",
+      "source": "Google Fonts",
+      "weights": [400, 500, 600],
+      "fallback": "ui-monospace, monospace"
+    }
+  },
+  "scale": {
+    "display1": { "size": 96, "lineHeight": 0.95, "weight": 700, "tracking": -0.04 },
+    "display2": { "size": 72, "lineHeight": 0.95, "weight": 700, "tracking": -0.04 },
+    "h1":       { "size": 48, "lineHeight": 1.10, "weight": 700, "tracking": -0.03 },
+    "h2":       { "size": 36, "lineHeight": 1.15, "weight": 700, "tracking": -0.02 },
+    "h3":       { "size": 24, "lineHeight": 1.20, "weight": 600, "tracking": -0.01 },
+    "h4":       { "size": 18, "lineHeight": 1.30, "weight": 600, "tracking": -0.01 },
+    "body":     { "size": 16, "lineHeight": 1.55, "weight": 400, "tracking": 0 },
+    "bodyMd":   { "size": 14, "lineHeight": 1.50, "weight": 400, "tracking": 0 },
+    "small":    { "size": 13, "lineHeight": 1.45, "weight": 400, "tracking": 0 },
+    "caption":  { "size": 12, "lineHeight": 1.40, "weight": 500, "tracking": 0.02 },
+    "overline": { "size": 11, "lineHeight": 1.30, "weight": 700, "tracking": 0.15, "transform": "uppercase" }
+  }
+}

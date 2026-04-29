@@ -1,0 +1,79 @@
+# Universal error codes for kehdo API
+# Every code listed here has:
+#   - a stable UPPER_SNAKE_CASE identifier
+#   - an HTTP status it maps to
+#   - an i18n key for client-side message localization
+
+codes:
+  # ---- Generic ----
+  - code: BAD_REQUEST
+    httpStatus: 400
+    i18nKey: errors.BAD_REQUEST
+    description: Request validation failed
+  - code: UNAUTHORIZED
+    httpStatus: 401
+    i18nKey: errors.UNAUTHORIZED
+    description: Missing or invalid auth credentials
+  - code: FORBIDDEN
+    httpStatus: 403
+    i18nKey: errors.FORBIDDEN
+    description: Authenticated but not allowed
+  - code: NOT_FOUND
+    httpStatus: 404
+    i18nKey: errors.NOT_FOUND
+    description: Resource does not exist
+  - code: CONFLICT
+    httpStatus: 409
+    i18nKey: errors.CONFLICT
+    description: Conflict with existing resource state
+  - code: INTERNAL_ERROR
+    httpStatus: 500
+    i18nKey: errors.INTERNAL_ERROR
+    description: Server-side error
+
+  # ---- Auth ----
+  - code: EMAIL_ALREADY_REGISTERED
+    httpStatus: 409
+    i18nKey: errors.EMAIL_ALREADY_REGISTERED
+  - code: INVALID_CREDENTIALS
+    httpStatus: 401
+    i18nKey: errors.INVALID_CREDENTIALS
+  - code: REFRESH_TOKEN_INVALID
+    httpStatus: 401
+    i18nKey: errors.REFRESH_TOKEN_INVALID
+  - code: GOOGLE_ID_TOKEN_INVALID
+    httpStatus: 401
+    i18nKey: errors.GOOGLE_ID_TOKEN_INVALID
+
+  # ---- Quota / Rate limit ----
+  - code: DAILY_QUOTA_EXCEEDED
+    httpStatus: 402
+    i18nKey: errors.DAILY_QUOTA_EXCEEDED
+    description: Free tier daily limit reached
+  - code: RATE_LIMIT_EXCEEDED
+    httpStatus: 429
+    i18nKey: errors.RATE_LIMIT_EXCEEDED
+    description: Per-second rate limit hit
+
+  # ---- Conversation / AI ----
+  - code: UPLOAD_FAILED
+    httpStatus: 400
+    i18nKey: errors.UPLOAD_FAILED
+  - code: SCREENSHOT_INVALID
+    httpStatus: 400
+    i18nKey: errors.SCREENSHOT_INVALID
+    description: Image is corrupt, blank, or contains no chat
+  - code: OCR_FAILED
+    httpStatus: 422
+    i18nKey: errors.OCR_FAILED
+  - code: NO_MESSAGES_DETECTED
+    httpStatus: 422
+    i18nKey: errors.NO_MESSAGES_DETECTED
+  - code: LLM_UPSTREAM_ERROR
+    httpStatus: 502
+    i18nKey: errors.LLM_UPSTREAM_ERROR
+    description: Both primary and failover LLM providers failed
+  - code: CONTENT_BLOCKED
+    httpStatus: 422
+    i18nKey: errors.CONTENT_BLOCKED
+    description: Content was blocked by safety moderation

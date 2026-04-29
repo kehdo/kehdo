@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- Exclude all sensitive auth tokens and conversation cache -->
+    <exclude domain="sharedpref" path="kehdo_secure_prefs.xml"/>
+    <exclude domain="database" path="kehdo.db"/>
+</full-backup-content>

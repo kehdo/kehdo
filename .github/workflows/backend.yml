@@ -1,0 +1,93 @@
+name: Backend CI
+
+on:
+  pull_request:
+    paths:
+      - 'backend/**'
+      - 'contracts/**'
+      - '.github/workflows/backend.yml'
+  push:
+    branches: [main, develop]
+    paths:
+      - 'backend/**'
+      - 'contracts/**'
+
+jobs:
+  test:
+    name: Build & test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: kehdo
+          POSTGRES_PASSWORD: kehdo
+          POSTGRES_DB: kehdo_test
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U kehdo"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports: [6379:6379]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Validate OpenAPI spec
+        run: |
+          if [ -f tools/validate-contracts.sh ]; then
+            bash tools/validate-contracts.sh
+          fi
+
+      - name: Build & test
+        working-directory: backend
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/kehdo_test
+          SPRING_DATASOURCE_USERNAME: kehdo
+          SPRING_DATASOURCE_PASSWORD: kehdo
+          SPRING_REDIS_HOST: localhost
+        run: |
+          if [ -f gradlew ]; then
+            ./gradlew check --no-daemon
+          else
+            echo "::warning::Backend gradlew not yet present — scaffold pending"
+          fi
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-reports
+          path: backend/**/build/reports/
+
+  docker:
+    name: Build Docker image
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        working-directory: backend
+        run: |
+          if [ -f Dockerfile ]; then
+            docker build -t kehdo-backend:${{ github.sha }} .
+          fi

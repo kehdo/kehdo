@@ -1,0 +1,42 @@
+name: Contracts CI
+
+on:
+  pull_request:
+    paths:
+      - 'contracts/**'
+      - '.github/workflows/contracts.yml'
+  push:
+    branches: [main, develop]
+    paths:
+      - 'contracts/**'
+
+jobs:
+  validate:
+    name: Validate OpenAPI spec
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # needed for breaking-change check
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Spectral (lint) + oasdiff (breaking-change)
+        run: |
+          npm install -g @stoplight/spectral-cli
+          npm install -g oasdiff
+
+      - name: Lint OpenAPI spec
+        run: spectral lint contracts/openapi/kehdo.v1.yaml --fail-severity=warn
+
+      - name: Check for breaking changes (vs main)
+        if: github.event_name == 'pull_request' && github.base_ref == 'main'
+        run: |
+          git fetch origin main
+          git show origin/main:contracts/openapi/kehdo.v1.yaml > /tmp/main-spec.yaml || exit 0
+          oasdiff breaking /tmp/main-spec.yaml contracts/openapi/kehdo.v1.yaml --fail-on ERR

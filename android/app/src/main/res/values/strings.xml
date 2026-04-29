@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">kehdo</string>
+    <!-- All other strings are generated from /design/copy/*.json by tools/generate-tokens.sh -->
+</resources>

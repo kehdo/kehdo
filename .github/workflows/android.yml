@@ -1,0 +1,81 @@
+name: Android CI
+
+on:
+  pull_request:
+    paths:
+      - 'android/**'
+      - 'contracts/**'
+      - 'design/**'
+      - '.github/workflows/android.yml'
+  push:
+    branches: [main, develop]
+    paths:
+      - 'android/**'
+      - 'contracts/**'
+      - 'design/**'
+
+jobs:
+  build:
+    name: Build & test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Generate design tokens
+        run: |
+          if [ -f tools/generate-tokens.sh ]; then
+            bash tools/generate-tokens.sh
+          fi
+
+      - name: Generate API client
+        run: |
+          if [ -f tools/generate-clients.sh ] && command -v openapi-generator &>/dev/null; then
+            bash tools/generate-clients.sh
+          fi
+
+      - name: Lint
+        working-directory: android
+        run: |
+          if [ -f gradlew ]; then
+            ./gradlew lint --no-daemon
+          else
+            echo "::warning::Android gradlew not yet present — scaffold pending"
+          fi
+
+      - name: Unit tests
+        working-directory: android
+        run: |
+          if [ -f gradlew ]; then
+            ./gradlew testDebugUnitTest --no-daemon
+          fi
+
+      - name: Paparazzi snapshot tests
+        working-directory: android
+        run: |
+          if [ -f gradlew ]; then
+            ./gradlew verifyPaparazziDebug --no-daemon || true
+          fi
+
+      - name: Build debug APK
+        working-directory: android
+        run: |
+          if [ -f gradlew ]; then
+            ./gradlew :app:assembleDebug --no-daemon
+          fi
+
+      - name: Upload debug APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: ignore

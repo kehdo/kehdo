@@ -1,0 +1,74 @@
+name: Web CI
+
+on:
+  pull_request:
+    paths:
+      - 'web/**'
+      - 'design/**'
+      - 'contracts/**'
+      - '.github/workflows/web.yml'
+  push:
+    branches: [main, develop]
+    paths:
+      - 'web/**'
+      - 'design/**'
+
+jobs:
+  build:
+    name: Build & test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: Install pnpm
+        run: npm install -g pnpm@9
+
+      - name: Generate design tokens
+        run: |
+          if [ -f tools/generate-tokens.sh ]; then
+            bash tools/generate-tokens.sh
+          fi
+
+      - name: Install deps
+        working-directory: web
+        run: |
+          if [ -f package.json ]; then
+            pnpm install --frozen-lockfile
+          fi
+
+      - name: Lint
+        working-directory: web
+        run: |
+          if [ -f package.json ]; then
+            pnpm lint
+          fi
+
+      - name: Type-check
+        working-directory: web
+        run: |
+          if [ -f package.json ]; then
+            pnpm typecheck
+          fi
+
+      - name: Test
+        working-directory: web
+        run: |
+          if [ -f package.json ]; then
+            pnpm test
+          fi
+
+      - name: Build
+        working-directory: web
+        run: |
+          if [ -f package.json ]; then
+            pnpm build
+          fi

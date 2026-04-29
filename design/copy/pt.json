@@ -1,0 +1,14 @@
+{
+  "version": "1.0.0",
+  "language": "pt",
+  "common": {
+    "appName": "kehdo",
+    "tagline": "Responda com confiança serena."
+  },
+  "onboarding": {
+    "welcome.title": "Responda com confiança serena.",
+    "welcome.subtitle": "Solte um print de chat. Receba a resposta perfeita em segundos.",
+    "welcome.cta": "Começar"
+  },
+  "_note": "Full translations to be added by translation service before launch."
+}

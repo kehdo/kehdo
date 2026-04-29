@@ -1,0 +1,47 @@
+# Fastfile — kehdo iOS automation
+# See: https://docs.fastlane.tools
+
+default_platform(:ios)
+
+platform :ios do
+
+  before_all do
+    setup_ci if ENV['CI']
+  end
+
+  desc "Run unit + snapshot tests"
+  lane :test do
+    run_tests(
+      workspace: "Kehdo.xcworkspace",
+      scheme: "Kehdo",
+      device: "iPhone 15"
+    )
+  end
+
+  desc "Build and upload to TestFlight"
+  lane :beta do
+    match(type: "appstore", readonly: true)
+    increment_build_number(xcodeproj: "Kehdo.xcodeproj")
+    build_app(
+      workspace: "Kehdo.xcworkspace",
+      scheme: "Kehdo"
+    )
+    upload_to_testflight(
+      skip_waiting_for_build_processing: true
+    )
+  end
+
+  desc "Submit a release to App Store"
+  lane :release do
+    match(type: "appstore", readonly: true)
+    build_app(
+      workspace: "Kehdo.xcworkspace",
+      scheme: "Kehdo"
+    )
+    upload_to_app_store(
+      submit_for_review: false,
+      automatic_release: false,
+      force: true
+    )
+  end
+end

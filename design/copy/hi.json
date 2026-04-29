@@ -1,0 +1,14 @@
+{
+  "version": "1.0.0",
+  "language": "hi",
+  "common": {
+    "appName": "kehdo",
+    "tagline": "शांत आत्मविश्वास के साथ जवाब दें।"
+  },
+  "onboarding": {
+    "welcome.title": "शांत आत्मविश्वास के साथ जवाब दें।",
+    "welcome.subtitle": "एक चैट स्क्रीनशॉट डालें। सेकंड में सही जवाब पाएं।",
+    "welcome.cta": "शुरू करें"
+  },
+  "_note": "Full translations to be added by translation service before launch. This file is a stub for the i18n pipeline."
+}

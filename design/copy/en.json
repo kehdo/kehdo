@@ -1,0 +1,132 @@
+{
+  "version": "1.0.0",
+  "language": "en",
+
+  "common": {
+    "appName": "kehdo",
+    "tagline": "Reply with quiet confidence."
+  },
+
+  "onboarding": {
+    "welcome.title": "Reply with quiet confidence.",
+    "welcome.subtitle": "Drop a chat screenshot. Get the perfect reply in seconds.",
+    "welcome.cta": "Get started",
+    "welcome.signin": "Already have an account?",
+    "welcome.signin.cta": "Sign in",
+    "skip": "Skip"
+  },
+
+  "auth": {
+    "signup.title": "Welcome to kehdo.",
+    "signup.subtitle": "Free forever — 5 replies a day, no credit card.",
+    "signup.email.label": "Email address",
+    "signup.password.label": "Password",
+    "signup.cta": "Create account",
+    "signup.haveAccount": "Already have an account?",
+    "signin.title": "Welcome back.",
+    "signin.subtitle": "Sign in to pick up where you left off.",
+    "signin.email.label": "Email address",
+    "signin.password.label": "Password",
+    "signin.forgot": "Forgot password?",
+    "signin.cta": "Sign in",
+    "signin.or": "OR CONTINUE WITH",
+    "signin.google": "Google",
+    "signin.apple": "Apple",
+    "signin.noAccount": "New here?",
+    "signin.noAccount.cta": "Create account"
+  },
+
+  "home": {
+    "greet.morning": "Good morning",
+    "greet.afternoon": "Good afternoon",
+    "greet.evening": "Good evening",
+    "hero.label": "NEW REPLY",
+    "hero.title": "Upload a screenshot.",
+    "hero.cta": "Start now",
+    "stats.replies": "REPLIES",
+    "stats.saved": "SAVED",
+    "stats.streak": "STREAK",
+    "recent.title": "Recent",
+    "recent.seeAll": "See all"
+  },
+
+  "upload": {
+    "title": "Drop your screenshot",
+    "subtitle": "WhatsApp, iMessage, Slack, Instagram — anything that's a screenshot.",
+    "pickFromGallery": "Pick from gallery",
+    "pasteFromClipboard": "Paste from clipboard"
+  },
+
+  "reply": {
+    "parse.title": "We found {{count}} messages.",
+    "parse.subtitle": "Tap any bubble to correct who said what.",
+    "tone.label": "Choose a tone",
+    "generate.cta": "Generate replies",
+    "results.title": "Take your pick.",
+    "results.bestMatch": "BEST MATCH",
+    "results.copy": "COPY",
+    "results.copied": "Copied!",
+    "results.regenerate": "Regenerate",
+    "results.refine": "Refine"
+  },
+
+  "history": {
+    "title": "Your library",
+    "search.placeholder": "Search conversations…",
+    "filter.all": "All",
+    "filter.saved": "Saved",
+    "empty": "Your replies will live here.",
+    "empty.cta": "Generate your first reply"
+  },
+
+  "profile": {
+    "label": "ACCOUNT",
+    "plan.starter": "STARTER",
+    "plan.pro": "PRO MEMBER",
+    "plan.unlimited": "UNLIMITED",
+    "menu.subscription": "Manage subscription",
+    "menu.usage": "Usage & limits",
+    "menu.saved": "Saved replies",
+    "menu.privacy": "Privacy",
+    "menu.notifications": "Notifications",
+    "menu.signOut": "Sign out"
+  },
+
+  "paywall": {
+    "label": "UNLOCK EVERYTHING",
+    "title": "Better for the price of a coffee.",
+    "subtitle": "Unlimited replies. Every tone. First-class support.",
+    "pro.name": "PRO · YEARLY",
+    "pro.save": "SAVE 30%",
+    "pro.feature1": "Unlimited replies",
+    "pro.feature2": "All 18 tones + premium voices",
+    "pro.feature3": "Custom reply refinement",
+    "pro.feature4": "On-device OCR option",
+    "pro.feature5": "Instant screenshot deletion",
+    "monthly.name": "Monthly plan",
+    "monthly.desc": "Same features, billed monthly",
+    "cta": "Start 7-day free trial",
+    "footnote": "Cancel anytime. No credit card for trial."
+  },
+
+  "errors": {
+    "BAD_REQUEST": "Something looks off — please try again.",
+    "UNAUTHORIZED": "Please sign in again.",
+    "FORBIDDEN": "You don't have access to that.",
+    "NOT_FOUND": "We couldn't find that.",
+    "CONFLICT": "That's already taken or in use.",
+    "INTERNAL_ERROR": "Our servers hiccuped. Please try again.",
+    "EMAIL_ALREADY_REGISTERED": "An account with this email already exists. Sign in instead.",
+    "INVALID_CREDENTIALS": "Email or password is incorrect.",
+    "REFRESH_TOKEN_INVALID": "Session expired — please sign in again.",
+    "GOOGLE_ID_TOKEN_INVALID": "Google sign-in failed. Please try again.",
+    "DAILY_QUOTA_EXCEEDED": "You've hit your daily limit of {{limit}} replies. Upgrade to keep going.",
+    "RATE_LIMIT_EXCEEDED": "Slow down a bit — try again in a moment.",
+    "UPLOAD_FAILED": "We couldn't upload that screenshot. Please try again.",
+    "SCREENSHOT_INVALID": "We couldn't read that image. Try a clearer screenshot.",
+    "OCR_FAILED": "We had trouble reading the text. Try a sharper screenshot.",
+    "NO_MESSAGES_DETECTED": "We didn't see any messages in that screenshot.",
+    "LLM_UPSTREAM_ERROR": "Our AI is taking a quick break. Please try again.",
+    "CONTENT_BLOCKED": "We can't generate a reply for this conversation."
+  }
+}

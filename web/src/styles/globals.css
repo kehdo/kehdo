@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Imported tokens — generated from /design/tokens/colors.json by tools/generate-tokens.sh */
+@import "./tokens.generated.css";
+
+@layer base {
+  html {
+    @apply bg-bg text-moonlight;
+  }
+  body {
+    @apply font-sans antialiased;
+  }
+}
+
+@layer components {
+  .aurora-text {
+    @apply bg-aurora-gradient bg-clip-text text-transparent;
+  }
+}

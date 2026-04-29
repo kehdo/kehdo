@@ -1,0 +1,35 @@
+# CODEOWNERS — GitHub auto-assigns reviewers based on changed paths
+# Format: <path-pattern> <space> <reviewers>
+# Lower lines override upper lines.
+
+# Default: any change requires engineering team review
+*                           @kehdo/engineering
+
+# Contract changes affect all platforms — require API reviewers
+/contracts/                 @kehdo/api-reviewers @kehdo/engineering
+
+# Design tokens affect all platforms — require design reviewers
+/design/                    @kehdo/design-reviewers @kehdo/engineering
+
+# Platform-specific code
+/backend/                   @kehdo/backend-team
+/android/                   @kehdo/android-team
+/ios/                       @kehdo/ios-team
+/web/                       @kehdo/web-team
+
+# Infrastructure — require platform team
+/infra/                     @kehdo/platform-team
+
+# CI/CD changes need extra eyes
+/.github/                   @kehdo/platform-team @kehdo/tech-leads
+
+# ADRs need tech lead approval
+/docs/adrs/                 @kehdo/tech-leads
+
+# CLAUDE.md changes require lead review (these encode our conventions)
+**/CLAUDE.md                @kehdo/tech-leads
+
+# Security-sensitive files
+/SECURITY.md                @kehdo/tech-leads
+/backend/auth/              @kehdo/tech-leads @kehdo/backend-team
+/contracts/openapi/         @kehdo/tech-leads @kehdo/api-reviewers

@@ -1,0 +1,27 @@
+{
+  "$schema": "../../tools/schemas/spacing.schema.json",
+  "version": "1.0.0",
+  "description": "4-point grid spacing scale",
+  "scale": {
+    "0": 0,
+    "1": 4,
+    "2": 8,
+    "3": 12,
+    "4": 16,
+    "5": 24,
+    "6": 32,
+    "7": 48,
+    "8": 64,
+    "9": 96,
+    "10": 128
+  },
+  "radii": {
+    "none": 0,
+    "sm": 6,
+    "md": 10,
+    "lg": 14,
+    "xl": 20,
+    "2xl": 28,
+    "full": 9999
+  }
+}

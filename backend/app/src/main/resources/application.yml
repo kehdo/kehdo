@@ -1,0 +1,94 @@
+spring:
+  application:
+    name: kehdo-backend
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/kehdo}
+    username: ${SPRING_DATASOURCE_USERNAME:kehdo}
+    password: ${SPRING_DATASOURCE_PASSWORD:kehdo}
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+
+  jpa:
+    hibernate:
+      ddl-auto: validate   # Flyway owns the schema, never Hibernate
+    properties:
+      hibernate:
+        jdbc.time_zone: UTC
+        format_sql: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  data:
+    redis:
+      host: ${SPRING_REDIS_HOST:localhost}
+      port: 6379
+
+server:
+  port: 8080
+  shutdown: graceful
+  forward-headers-strategy: framework
+  error:
+    include-message: never
+    include-stacktrace: never
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health, info, metrics, prometheus
+  endpoint:
+    health:
+      show-details: never
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      environment: ${SPRING_PROFILES_ACTIVE:local}
+
+# kehdo-specific config
+kehdo:
+  jwt:
+    issuer: https://api.kehdo.app
+    access-token-ttl-seconds: 300        # 5 minutes
+    refresh-token-ttl-days: 30
+    public-key-path: ${KEHDO_JWT_PUBLIC_KEY_PATH:classpath:keys/jwt-public.pem}
+    private-key-path: ${KEHDO_JWT_PRIVATE_KEY_PATH:classpath:keys/jwt-private.pem}
+
+  storage:
+    s3:
+      endpoint: ${KEHDO_S3_ENDPOINT:http://localhost:9000}
+      bucket: ${KEHDO_S3_BUCKET:kehdo-screenshots-dev}
+      access-key: ${KEHDO_S3_ACCESS_KEY:minioadmin}
+      secret-key: ${KEHDO_S3_SECRET_KEY:minioadmin}
+      presigned-url-ttl-minutes: 5
+
+  rate-limit:
+    free-daily-replies: 5
+    pro-daily-replies: 100
+    rps-per-user: 10
+
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      model: gpt-4o
+    anthropic:
+      api-key: ${ANTHROPIC_API_KEY:}
+      model: claude-opus-4-7
+    google-vision:
+      credentials-path: ${GOOGLE_APPLICATION_CREDENTIALS:}
+
+logging:
+  level:
+    root: INFO
+    app.kehdo: DEBUG
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] [%X{traceId:-}] %logger{40} - %msg%n'

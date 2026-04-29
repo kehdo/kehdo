@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Placeholder colors — real Aurora palette values come from /design/tokens/colors.json
+    via tools/generate-tokens.sh and live in :core:ui.
+    These minimal values exist so the splash window background works at app launch.
+-->
+<resources>
+    <color name="kehdo_canvas">#0A0612</color>
+</resources>

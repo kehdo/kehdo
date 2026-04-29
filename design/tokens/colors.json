@@ -1,0 +1,98 @@
+{
+  "$schema": "../../tools/schemas/colors.schema.json",
+  "version": "1.0.0",
+  "name": "Aurora",
+  "colors": {
+    "bg": {
+      "value": "#0A0612",
+      "description": "Deep Violet Black — primary canvas"
+    },
+    "bg2": {
+      "value": "#120A1F",
+      "description": "Violet Veil — secondary background"
+    },
+    "surface": {
+      "value": "#1A0F2E",
+      "description": "Cosmic Surface — elevated cards"
+    },
+    "surface2": {
+      "value": "#24173D",
+      "description": "Elevated Surface 2 — modals, hover"
+    },
+    "purple": {
+      "value": "#9C5BFF",
+      "description": "Electric Purple — primary signature"
+    },
+    "purpleBright": {
+      "value": "#B47BFF",
+      "description": "Lavender Glow — hover states"
+    },
+    "purpleDeep": {
+      "value": "#6B2FD9",
+      "description": "Deep Amethyst — gradient depth"
+    },
+    "pink": {
+      "value": "#EC4899",
+      "description": "Electric Pink — accent"
+    },
+    "amber": {
+      "value": "#F59E0B",
+      "description": "Solar Amber — warmth"
+    },
+    "blue": {
+      "value": "#3B82F6",
+      "description": "Sapphire Blue — support"
+    },
+    "text": {
+      "value": "#F5F3FF",
+      "description": "Moonlight — primary text on dark"
+    },
+    "textDim": {
+      "value": "rgba(245, 243, 255, 0.65)",
+      "description": "Dimmed text"
+    },
+    "textMute": {
+      "value": "rgba(245, 243, 255, 0.45)",
+      "description": "Muted/tertiary text"
+    },
+    "line": {
+      "value": "rgba(255, 255, 255, 0.08)",
+      "description": "Borders, dividers"
+    },
+    "lineStrong": {
+      "value": "rgba(255, 255, 255, 0.14)",
+      "description": "Stronger borders"
+    },
+    "success": {
+      "value": "#10B981",
+      "description": "Status only — not brand"
+    },
+    "warning": {
+      "value": "#F59E0B",
+      "description": "Same as amber — used for status"
+    },
+    "error": {
+      "value": "#EF4444",
+      "description": "Status only"
+    }
+  },
+  "gradients": {
+    "aurora": {
+      "stops": [
+        { "color": "#9C5BFF", "position": 0 },
+        { "color": "#EC4899", "position": 50 },
+        { "color": "#F59E0B", "position": 100 }
+      ],
+      "angle": 135,
+      "description": "Hero gradient — used on logo, primary CTAs, headline accents"
+    },
+    "glow": {
+      "stops": [
+        { "color": "#9C5BFF", "position": 0 },
+        { "color": "#3B82F6", "position": 100 }
+      ],
+      "angle": 135,
+      "description": "Cooler secondary gradient — depth, selected states"
+    }
+  }
+}

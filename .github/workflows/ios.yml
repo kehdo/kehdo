@@ -1,0 +1,58 @@
+name: iOS CI
+
+on:
+  pull_request:
+    paths:
+      - 'ios/**'
+      - 'contracts/**'
+      - 'design/**'
+      - '.github/workflows/ios.yml'
+  push:
+    branches: [main, develop]
+    paths:
+      - 'ios/**'
+      - 'contracts/**'
+      - 'design/**'
+
+jobs:
+  build:
+    name: Build & test
+    runs-on: macos-14
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode 15.2
+        run: sudo xcode-select -s /Applications/Xcode_15.2.app
+
+      - name: Generate design tokens
+        run: |
+          if [ -f tools/generate-tokens.sh ]; then
+            bash tools/generate-tokens.sh
+          fi
+
+      - name: Install SwiftLint
+        run: brew install swiftlint
+
+      - name: SwiftLint
+        working-directory: ios
+        run: |
+          if [ -f .swiftlint.yml ]; then
+            swiftlint --strict
+          fi
+
+      - name: Build & test
+        working-directory: ios
+        run: |
+          if [ -f Kehdo.xcworkspace/contents.xcworkspacedata ]; then
+            xcodebuild test \
+              -workspace Kehdo.xcworkspace \
+              -scheme Kehdo \
+              -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.2' \
+              CODE_SIGN_IDENTITY="" \
+              CODE_SIGNING_REQUIRED=NO \
+              | xcpretty
+          else
+            echo "::warning::iOS workspace not yet present — scaffold pending"
+          fi
