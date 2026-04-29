@@ -1,5 +1,9 @@
 import Link from "next/link";
 import { HowItWorks } from "@/components/HowItWorks";
+import { Privacy } from "@/components/Privacy";
+import { FreeTierCallout } from "@/components/FreeTierCallout";
+import { Pricing } from "@/components/Pricing";
+import { Faq } from "@/components/Faq";
 import { FinalCta } from "@/components/FinalCta";
 
 export default function Home() {
@@ -64,9 +68,13 @@ export default function Home() {
       </section>
 
       <HowItWorks />
+      <Privacy />
+      <FreeTierCallout />
+      <Pricing />
+      <Faq />
       <FinalCta />
 
-      {/* TODO: Features bento, Pricing, FAQ, Privacy, Free-tier, Comparison, Trust signals, Testimonials, Product preview — to be built in subsequent PRs per /web/CLAUDE.md */}
+      {/* TODO: ProductPreview, FeaturesBento, Testimonials, Comparison, TrustSignals — slot into spec positions 3, 5, 9, 10, 11 via PR 4 merge per /web/CLAUDE.md */}
     </main>
   );
 }
