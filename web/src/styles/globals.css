@@ -1,9 +1,9 @@
+/* Imported tokens — generated from /design/tokens/colors.json by tools/generate-tokens.sh */
+@import "./tokens.generated.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Imported tokens — generated from /design/tokens/colors.json by tools/generate-tokens.sh */
-@import "./tokens.generated.css";
 
 @layer base {
   html {
