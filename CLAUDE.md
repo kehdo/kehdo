@@ -283,6 +283,8 @@ If Claude is about to do any of these, **STOP and ask the user first:**
 - **Next up:** Backend auth → Android auth → AI pipeline → Android full flow → Android launch → iOS
 - **Brand:** Aurora palette LOCKED
 - **Product name:** kehdo.app (do NOT use "Flawlessly")
+- **AI stack (Phase 1):** Vertex AI Gemini 2.0 Flash (primary) + OpenAI gpt-4o-mini (failover) + Google Cloud Vision (OCR). The landing page does NOT name the LLM — vendor flexibility is intentional.
+- **AI personalization & roadmap:** voice fingerprint + contact intelligence with 3-layer prompt injection, 5-phase migration plan to a self-hosted model. See [ADR 0006](docs/adrs/0006-ai-personalization-and-model-roadmap.md).
 
 ---
 
