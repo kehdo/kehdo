@@ -27,8 +27,8 @@ This directory holds the kehdo marketing landing page deployed at **kehdo.app**.
 | Forms | react-hook-form + Zod | Validation + minimal re-renders |
 | Animation | Framer Motion | Aurora orbs, scroll-triggered |
 | Icons | lucide-react | Clean, tree-shaken |
-| Email | Resend | Waitlist signups |
-| Analytics | Plausible | Privacy-friendly, on-brand |
+| Waitlist | Google Apps Script + Sheets | Pre-launch email capture |
+| Analytics | Vercel Web Analytics | Free on Hobby plan, no cookies, on-brand |
 | Testing | Vitest + Testing Library | Fast unit tests |
 | E2E | Playwright | One smoke test for the landing flow |
 | Hosting | Vercel | Best-in-class Next.js host |
@@ -53,7 +53,7 @@ web/
     │   ├── page.tsx             ← landing page
     │   ├── globals.css          ← Tailwind + Aurora vars
     │   └── api/
-    │       └── waitlist/route.ts ← POST email → Resend
+    │       └── waitlist/route.ts ← POST email → Google Sheets webhook
     ├── components/              ← reusable React components
     │   ├── Hero.tsx
     │   ├── HowItWorks.tsx
@@ -139,7 +139,7 @@ Launch in English. Add Hindi, Spanish, Portuguese after first traffic data.
 ```bash
 cd web
 pnpm install                              # use pnpm, not npm
-cp .env.example .env.local                # add Resend key
+cp .env.example .env.local                # configure GOOGLE_SHEET_WEBHOOK_URL
 pnpm dev                                  # http://localhost:3000
 
 # Other scripts
@@ -170,7 +170,7 @@ pnpm format                               # prettier --write
 - ❌ Use `useState` for form values — use `react-hook-form`
 - ❌ Use `<img>` — always `<Image>` from `next/image` for optimization
 - ❌ Use `<a href>` for internal nav — always `<Link>` from `next/link`
-- ❌ Use Google Analytics — use Plausible (privacy-friendly is a brand value)
+- ❌ Use Google Analytics — use Vercel Web Analytics (privacy-friendly is a brand value)
 - ❌ Add a new section to the landing page without asking
 - ❌ Use any state management library (Redux, Zustand) — landing page should be mostly stateless
 - ❌ Add server-side state — Vercel functions are stateless; talk to backend API instead

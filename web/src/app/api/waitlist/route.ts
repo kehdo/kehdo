@@ -9,10 +9,12 @@ const Body = z.object({
 /**
  * POST /api/waitlist
  *
- * Adds an email to the kehdo beta waitlist.
- * Wires to Resend audiences (or a Postgres table once the backend ships).
+ * Forwards the email to a Google Apps Script web app endpoint that
+ * appends a row to a Google Sheet. The Apps Script is responsible for
+ * deduplication; this route just relays.
  *
- * Phase 0: stub. Phase 1: Resend integration. Phase 2: backend endpoint.
+ * Falls back to a dev-friendly console.log when GOOGLE_SHEET_WEBHOOK_URL
+ * is missing (e.g. local pnpm dev without a .env.local).
  */
 export async function POST(req: NextRequest) {
   try {
@@ -21,27 +23,78 @@ export async function POST(req: NextRequest) {
 
     if (!parsed.success) {
       return NextResponse.json(
-        { error: { code: "INVALID_INPUT", message: "Email is required and must be valid." } },
+        {
+          error: {
+            code: "INVALID_INPUT",
+            message: "Email is required and must be valid.",
+          },
+        },
         { status: 400 }
       );
     }
 
-    // TODO Phase 1: integrate Resend
-    //
-    //   import { Resend } from "resend";
-    //   const resend = new Resend(process.env.RESEND_API_KEY);
-    //   await resend.contacts.create({
-    //     email: parsed.data.email,
-    //     audienceId: process.env.RESEND_AUDIENCE_ID!,
-    //   });
+    const webhookUrl = process.env.GOOGLE_SHEET_WEBHOOK_URL;
 
-    console.log("[waitlist] new signup:", parsed.data.email);
+    if (!webhookUrl) {
+      // Dev fallback — webhook not configured. Log and accept so local UX works.
+      console.log(
+        "[waitlist] (dev — GOOGLE_SHEET_WEBHOOK_URL not set):",
+        parsed.data.email
+      );
+      return NextResponse.json({ ok: true }, { status: 201 });
+    }
+
+    const upstream = await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        email: parsed.data.email,
+        source: parsed.data.source ?? "landing",
+        timestamp: new Date().toISOString(),
+      }),
+      // Apps Script web apps can be slow on cold start; cap our wait.
+      signal: AbortSignal.timeout(8000),
+    });
+
+    if (!upstream.ok) {
+      console.error("[waitlist] webhook returned non-2xx:", upstream.status);
+      return NextResponse.json(
+        {
+          error: {
+            code: "WAITLIST_FAILED",
+            message: "Couldn't add you right now. Please try again in a moment.",
+          },
+        },
+        { status: 502 }
+      );
+    }
+
+    // Apps Script may answer with { ok, alreadyOnList } JSON or a plain "OK".
+    const text = await upstream.text();
+    let result: { ok?: boolean; alreadyOnList?: boolean } = {};
+    try {
+      result = JSON.parse(text);
+    } catch {
+      // Plain-text response — treat as success
+    }
+
+    if (result.alreadyOnList) {
+      return NextResponse.json(
+        { ok: true, alreadyOnList: true },
+        { status: 200 }
+      );
+    }
 
     return NextResponse.json({ ok: true }, { status: 201 });
   } catch (err) {
     console.error("[waitlist] error:", err);
     return NextResponse.json(
-      { error: { code: "SERVER_ERROR", message: "Something went wrong. Please try again." } },
+      {
+        error: {
+          code: "SERVER_ERROR",
+          message: "Something went wrong. Please try again.",
+        },
+      },
       { status: 500 }
     );
   }
