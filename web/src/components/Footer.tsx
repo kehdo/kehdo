@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Github } from "lucide-react";
 
 const PRODUCT_LINKS = [
   { href: "#how-it-works", label: "How it works" },
@@ -65,7 +64,7 @@ export function Footer() {
             </ul>
           </div>
 
-          <div className="col-span-1 md:col-span-2">
+          <div className="col-span-1 md:col-span-4">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-moonlight/45">
               Company
             </h3>
@@ -80,25 +79,6 @@ export function Footer() {
                   </Link>
                 </li>
               ))}
-            </ul>
-          </div>
-
-          <div className="col-span-2 md:col-span-2">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-moonlight/45">
-              Connect
-            </h3>
-            <ul className="mt-4 space-y-3 text-sm">
-              <li>
-                <a
-                  href="https://github.com/kehdo"
-                  className="inline-flex items-center gap-2 text-moonlight/65 transition hover:text-moonlight"
-                  rel="noopener noreferrer"
-                  target="_blank"
-                >
-                  <Github className="h-4 w-4" />
-                  <span>GitHub</span>
-                </a>
-              </li>
             </ul>
           </div>
         </div>

@@ -114,7 +114,7 @@ The page must include all of these, in this order. They're already drafted in `/
 8. **Pricing table** — Starter $0, Pro $4/mo yearly, Unlimited $12/mo
 9. **Testimonials** — 3 quotes (drafted in copy/en.json)
 10. **Comparison table** — vs. typing yourself, vs. generic AI
-11. **Trust signals** — "Powered by Claude Opus 4.7"
+11. **Trust signals** — brand-level only: native iOS/Android, privacy-first, 30-day auto-delete, built in India. **No LLM/vendor names** on the landing page (we keep model-vendor flexibility).
 12. **FAQ** — 6 questions (privacy, languages, cancel, etc.)
 13. **Final CTA + waitlist form** — "Your next reply is about to be flawless."
 14. **Footer** — links, app store buttons, social

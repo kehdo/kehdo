@@ -62,8 +62,8 @@ export default function PrivacyPage() {
           <ul className="list-disc space-y-2 pl-6">
             <li>
               We don&rsquo;t train any AI model on your screenshots, your
-              conversations, or your generated replies. Our LLM providers
-              (Anthropic, OpenAI) are explicitly opted-out of training on our
+              conversations, or your generated replies. Our LLM provider
+              (Google Vertex AI) is contractually opted out of training on our
               data.
             </li>
             <li>
@@ -102,9 +102,9 @@ export default function PrivacyPage() {
               backend infrastructure and S3 for screenshots.
             </li>
             <li>
-              <strong className="text-moonlight">Anthropic, OpenAI</strong>{" "}
-              (post-launch) — LLM providers for reply generation. Both
-              contractually opt out of training on our data.
+              <strong className="text-moonlight">Google Vertex AI</strong>{" "}
+              (post-launch) — LLM provider for reply generation. Contractually
+              opted out of training on our data.
             </li>
             <li>
               <strong className="text-moonlight">Google Cloud Vision</strong>{" "}

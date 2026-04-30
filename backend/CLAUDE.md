@@ -74,15 +74,22 @@ backend/
 
 ## 🤖 AI pipeline rules
 
-The `:ai` module is the product. When touching it:
+The `:ai` module is the product. **Phase 1 stack:** Vertex AI Gemini 2.0 Flash (primary) + OpenAI gpt-4o-mini (failover) + Google Cloud Vision (OCR). Full strategy + 5-phase migration plan in [ADR 0006](../docs/adrs/0006-ai-personalization-and-model-roadmap.md).
+
+When touching the `:ai` module:
 
 1. **Every LLM call goes through `LlmService`** — never call SDKs directly elsewhere
 2. **Every prompt externalized** in `/src/main/resources/prompts/*.mustache`
 3. **Token budgeting mandatory** via `TokenBudgeter` (hard limit: 3,000 tokens context)
-4. **Circuit breaker mandatory** — Resilience4j on all external calls
+4. **Circuit breaker mandatory** — Resilience4j on all external calls; gpt-4o-mini is the failover when Gemini fails
 5. **Moderation mandatory** — every reply through `ModerationClient`
 6. **Caching:** (conversation_hash + tone) cached in Redis 1 hour
 7. **Model version tracked:** `model_used` column on every `replies` row
+8. **Header-only OCR for contact name extraction.** When Contact Intelligence (Level 2 consent) is active, the vision prompt MUST instruct the model to extract the contact name from the chat header region only — never from message content. Enforce this in the prompt template and reject responses that include message-body text.
+9. **Phone numbers must never be stored as `contact_profiles.contact_name`.** If header OCR returns a phone number, skip profile creation entirely.
+10. **Three-layer prompt injection.** Layer 1 = app context (always). Layer 2 = global voice fingerprint (inject when global confidence ≥ 0.3). Layer 3 = contact-specific profile (inject when contact confidence ≥ 0.3 AND user has Level 2 consent for that contact). **Layer 3 overrides Layer 2 when they conflict.**
+11. **Every reply emits an `interaction_signal` row** capturing the option shown vs. chosen, mode used, regen count, and app hint. This is the data flywheel — non-negotiable.
+12. **Fine-tuning corpora are restricted.** Eligible: synthetic data, behavioral signals, and (with explicit Level-2+ consent) reply text the user actually selected. **Never eligible:** raw conversation text, OCR'd message bodies, screenshots. Privacy invariant — see [SECURITY.md](../SECURITY.md) and [privacy page](../web/src/app/privacy/page.tsx).
 
 ---
 
@@ -111,7 +118,7 @@ Swagger UI: `http://localhost:8080/swagger-ui.html`
 
 ## 🚫 Do NOT
 
-- Call OpenAI/Anthropic SDKs from outside `:ai/llm/`
+- Call any LLM SDK (Vertex AI, OpenAI, etc.) from outside `:ai/llm/`
 - Create a `@RestController` outside `:api/`
 - Inline SQL — use JPA or named queries
 - Log request bodies or response bodies
