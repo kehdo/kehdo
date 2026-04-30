@@ -36,8 +36,8 @@ export default function PrivacyPage() {
           <ul className="list-disc space-y-2 pl-6">
             <li>
               <strong className="text-moonlight">Waitlist email</strong> —
-              stored in Resend so we can email you when the app is ready to
-              install.
+              stored in a Google Sheet that only the founders can access. We
+              email you from this list when the app is ready to install.
             </li>
             <li>
               <strong className="text-moonlight">Screenshots (post-launch)</strong>{" "}
@@ -83,8 +83,10 @@ export default function PrivacyPage() {
         <Section title="Third-party services we use">
           <ul className="list-disc space-y-2 pl-6">
             <li>
-              <strong className="text-moonlight">Resend</strong> — waitlist
-              email storage and transactional email.
+              <strong className="text-moonlight">Google Workspace</strong> —
+              waitlist emails are stored in a Google Sheet accessible only to
+              the founders. Subject to Google&rsquo;s privacy and security
+              policies.
             </li>
             <li>
               <strong className="text-moonlight">Plausible</strong> — anonymous

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Resend } from "resend";
 import { z } from "zod";
 
 const Body = z.object({
@@ -10,9 +9,12 @@ const Body = z.object({
 /**
  * POST /api/waitlist
  *
- * Adds an email to the kehdo beta waitlist via Resend Audiences.
- * Falls back to a dev-friendly console.log when env vars are missing
- * (e.g. local pnpm dev without a .env.local).
+ * Forwards the email to a Google Apps Script web app endpoint that
+ * appends a row to a Google Sheet. The Apps Script is responsible for
+ * deduplication; this route just relays.
+ *
+ * Falls back to a dev-friendly console.log when GOOGLE_SHEET_WEBHOOK_URL
+ * is missing (e.g. local pnpm dev without a .env.local).
  */
 export async function POST(req: NextRequest) {
   try {
@@ -31,34 +33,31 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const apiKey = process.env.RESEND_API_KEY;
-    const audienceId = process.env.RESEND_AUDIENCE_ID;
+    const webhookUrl = process.env.GOOGLE_SHEET_WEBHOOK_URL;
 
-    if (!apiKey || !audienceId) {
-      // Dev fallback — env not configured. Log and accept so local UX works.
-      console.log("[waitlist] (dev — Resend env not set):", parsed.data.email);
+    if (!webhookUrl) {
+      // Dev fallback — webhook not configured. Log and accept so local UX works.
+      console.log(
+        "[waitlist] (dev — GOOGLE_SHEET_WEBHOOK_URL not set):",
+        parsed.data.email
+      );
       return NextResponse.json({ ok: true }, { status: 201 });
     }
 
-    const resend = new Resend(apiKey);
-    const result = await resend.contacts.create({
-      email: parsed.data.email,
-      audienceId,
-      unsubscribed: false,
+    const upstream = await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        email: parsed.data.email,
+        source: parsed.data.source ?? "landing",
+        timestamp: new Date().toISOString(),
+      }),
+      // Apps Script web apps can be slow on cold start; cap our wait.
+      signal: AbortSignal.timeout(8000),
     });
 
-    if (result.error) {
-      // Resend treats already-subscribed as an error; treat it as success
-      // for the user (idempotent) but distinguish in logs.
-      const message = result.error.message ?? "";
-      const alreadyExists = /already exists|already subscribed/i.test(message);
-
-      if (alreadyExists) {
-        console.log("[waitlist] already on list:", parsed.data.email);
-        return NextResponse.json({ ok: true, alreadyOnList: true }, { status: 200 });
-      }
-
-      console.error("[waitlist] Resend error:", result.error);
+    if (!upstream.ok) {
+      console.error("[waitlist] webhook returned non-2xx:", upstream.status);
       return NextResponse.json(
         {
           error: {
@@ -67,6 +66,22 @@ export async function POST(req: NextRequest) {
           },
         },
         { status: 502 }
+      );
+    }
+
+    // Apps Script may answer with { ok, alreadyOnList } JSON or a plain "OK".
+    const text = await upstream.text();
+    let result: { ok?: boolean; alreadyOnList?: boolean } = {};
+    try {
+      result = JSON.parse(text);
+    } catch {
+      // Plain-text response — treat as success
+    }
+
+    if (result.alreadyOnList) {
+      return NextResponse.json(
+        { ok: true, alreadyOnList: true },
+        { status: 200 }
       );
     }
 
