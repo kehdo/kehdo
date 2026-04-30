@@ -27,7 +27,7 @@ This directory holds the kehdo marketing landing page deployed at **kehdo.app**.
 | Forms | react-hook-form + Zod | Validation + minimal re-renders |
 | Animation | Framer Motion | Aurora orbs, scroll-triggered |
 | Icons | lucide-react | Clean, tree-shaken |
-| Email | Resend | Waitlist signups |
+| Waitlist | Google Apps Script + Sheets | Pre-launch email capture |
 | Analytics | Plausible | Privacy-friendly, on-brand |
 | Testing | Vitest + Testing Library | Fast unit tests |
 | E2E | Playwright | One smoke test for the landing flow |
@@ -53,7 +53,7 @@ web/
     │   ├── page.tsx             ← landing page
     │   ├── globals.css          ← Tailwind + Aurora vars
     │   └── api/
-    │       └── waitlist/route.ts ← POST email → Resend
+    │       └── waitlist/route.ts ← POST email → Google Sheets webhook
     ├── components/              ← reusable React components
     │   ├── Hero.tsx
     │   ├── HowItWorks.tsx
@@ -139,7 +139,7 @@ Launch in English. Add Hindi, Spanish, Portuguese after first traffic data.
 ```bash
 cd web
 pnpm install                              # use pnpm, not npm
-cp .env.example .env.local                # add Resend key
+cp .env.example .env.local                # configure GOOGLE_SHEET_WEBHOOK_URL
 pnpm dev                                  # http://localhost:3000
 
 # Other scripts

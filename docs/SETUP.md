@@ -263,7 +263,7 @@ After the initial push and branch protection setup, here's the recommended build
 
 Branch: `feat/web/landing-page`
 - Port the Aurora mockup to the Next.js app router
-- Wire up the waitlist email capture (Resend)
+- Wire up the waitlist email capture (Google Sheets via Apps Script)
 - Add Plausible analytics
 - Deploy to Vercel — `kehdo.app` live
 
@@ -351,6 +351,96 @@ Android Share Intent → iOS Share Sheet → Chrome → Keyboards.
 - **Domain:** kehdo.app
 - **Never use** the old name "Flawlessly" anywhere — it's deprecated
 - **Aurora palette** is locked in `/design/tokens/colors.json`
+
+---
+
+## 📋 Operator runbook — waitlist via Google Apps Script
+
+The landing page's `/api/waitlist` route forwards POSTed emails to a Google Apps Script web app that appends them to a Google Sheet. This avoids a paid SaaS dependency for pre-launch lead capture. Setup steps:
+
+### 1. Create the sheet
+
+1. https://sheets.google.com → **Blank** spreadsheet
+2. Rename: **kehdo waitlist**
+3. Row 1 headers (cells A1, B1, C1): `Email`, `Source`, `Timestamp`
+4. View → Freeze → 1 row (so headers stay visible)
+
+### 2. Paste the Apps Script handler
+
+**Extensions → Apps Script** → replace the default code with:
+
+```javascript
+function doPost(e) {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    const data = JSON.parse(e.postData.contents);
+
+    if (!data.email) {
+      return jsonResponse({ error: "email_required" });
+    }
+
+    // Dedupe: scan column A (skip header row) for existing email
+    const lastRow = sheet.getLastRow();
+    const existing = lastRow > 1
+      ? sheet.getRange("A2:A" + lastRow).getValues().flat().filter(Boolean)
+      : [];
+
+    if (existing.includes(data.email)) {
+      return jsonResponse({ ok: true, alreadyOnList: true });
+    }
+
+    sheet.appendRow([
+      data.email,
+      data.source || "landing",
+      data.timestamp || new Date().toISOString(),
+    ]);
+
+    return jsonResponse({ ok: true });
+  } catch (err) {
+    console.error(err);
+    return jsonResponse({ error: "server_error" });
+  }
+}
+
+function jsonResponse(payload) {
+  return ContentService
+    .createTextOutput(JSON.stringify(payload))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+```
+
+Save (Ctrl+S). Rename the project to `kehdo-waitlist-handler`.
+
+### 3. Deploy as web app
+
+1. **Deploy → New deployment** → gear icon → **Web app**
+2. Settings:
+   - Description: `kehdo waitlist v1`
+   - Execute as: **Me** (your Google account)
+   - Who has access: **Anyone** ⚠️ (required so the Vercel function can call it without auth)
+3. **Deploy** → authorize the OAuth scopes (Spreadsheets) on first run
+4. Copy the **Web app URL** — looks like `https://script.google.com/macros/s/AKfyc.../exec`
+
+### 4. Wire into Vercel
+
+Vercel → kehdo project → **Settings → Environment Variables** → add:
+
+- `GOOGLE_SHEET_WEBHOOK_URL` = the deployment URL
+- Scope: Production + Preview + Development
+
+Save, then redeploy (env-var changes don't apply to existing deployments).
+
+### 5. Smoke test
+
+Submit your own email through the form on `staging.kehdo.app` → check the sheet within ~3s for the new row. Submit again → form succeeds, sheet doesn't gain a duplicate (idempotent dedupe).
+
+### Updating the script later
+
+If you edit the Apps Script, **Deploy → Manage deployments → ⋯ → Edit → New version → Deploy** to update the same URL. The default "Save" only persists in the editor — it doesn't redeploy.
+
+### Migrating off Apps Script
+
+When you outgrow the sheet (ballpark: a few thousand signups, or when you need transactional email), export the sheet (File → Download → CSV) and import into your email service of choice (Mailchimp, ConvertKit, Buttondown, etc.). The `/api/waitlist` route can be re-pointed without UI changes.
 
 ---
 
