@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Instrument_Serif } from "next/font/google";
-import Script from "next/script";
+import { Analytics } from "@vercel/analytics/next";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
 import "@/styles/globals.css";
@@ -40,8 +40,6 @@ export const metadata: Metadata = {
   },
 };
 
-const PLAUSIBLE_DOMAIN = process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN;
-
 export default function RootLayout({
   children,
 }: {
@@ -53,14 +51,7 @@ export default function RootLayout({
         <Nav />
         {children}
         <Footer />
-        {PLAUSIBLE_DOMAIN && (
-          <Script
-            defer
-            data-domain={PLAUSIBLE_DOMAIN}
-            src="https://plausible.io/js/script.js"
-            strategy="afterInteractive"
-          />
-        )}
+        <Analytics />
       </body>
     </html>
   );

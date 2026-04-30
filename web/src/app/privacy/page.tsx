@@ -51,9 +51,9 @@ export default function PrivacyPage() {
             </li>
             <li>
               <strong className="text-moonlight">Usage analytics</strong> —
-              anonymous page views via Plausible (no cookies, no fingerprinting,
-              no IP addresses logged). Used to understand which features
-              matter.
+              anonymous page views via Vercel Web Analytics (no cookies,
+              no fingerprinting, IP addresses are hashed and never logged).
+              Used to understand which features matter.
             </li>
           </ul>
         </Section>
@@ -89,8 +89,9 @@ export default function PrivacyPage() {
               policies.
             </li>
             <li>
-              <strong className="text-moonlight">Plausible</strong> — anonymous
-              page-level analytics.
+              <strong className="text-moonlight">Vercel Web Analytics</strong>{" "}
+              — anonymous page-level analytics. No cookies, no third-party
+              tracking, IP addresses are hashed.
             </li>
             <li>
               <strong className="text-moonlight">Vercel</strong> — hosting for

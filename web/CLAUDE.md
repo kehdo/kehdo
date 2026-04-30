@@ -28,7 +28,7 @@ This directory holds the kehdo marketing landing page deployed at **kehdo.app**.
 | Animation | Framer Motion | Aurora orbs, scroll-triggered |
 | Icons | lucide-react | Clean, tree-shaken |
 | Waitlist | Google Apps Script + Sheets | Pre-launch email capture |
-| Analytics | Plausible | Privacy-friendly, on-brand |
+| Analytics | Vercel Web Analytics | Free on Hobby plan, no cookies, on-brand |
 | Testing | Vitest + Testing Library | Fast unit tests |
 | E2E | Playwright | One smoke test for the landing flow |
 | Hosting | Vercel | Best-in-class Next.js host |
@@ -170,7 +170,7 @@ pnpm format                               # prettier --write
 - ❌ Use `useState` for form values — use `react-hook-form`
 - ❌ Use `<img>` — always `<Image>` from `next/image` for optimization
 - ❌ Use `<a href>` for internal nav — always `<Link>` from `next/link`
-- ❌ Use Google Analytics — use Plausible (privacy-friendly is a brand value)
+- ❌ Use Google Analytics — use Vercel Web Analytics (privacy-friendly is a brand value)
 - ❌ Add a new section to the landing page without asking
 - ❌ Use any state management library (Redux, Zustand) — landing page should be mostly stateless
 - ❌ Add server-side state — Vercel functions are stateless; talk to backend API instead

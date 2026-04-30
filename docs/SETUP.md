@@ -264,7 +264,7 @@ After the initial push and branch protection setup, here's the recommended build
 Branch: `feat/web/landing-page`
 - Port the Aurora mockup to the Next.js app router
 - Wire up the waitlist email capture (Google Sheets via Apps Script)
-- Add Plausible analytics
+- Add Vercel Web Analytics
 - Deploy to Vercel — `kehdo.app` live
 
 ### Phase 2 — Backend auth (Weeks 2–3)
