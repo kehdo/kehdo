@@ -1,0 +1,435 @@
+{
+  "info": {
+    "_postman_id": "kehdo-api-v1",
+    "name": "kehdo API",
+    "description": "Postman collection for the kehdo backend API.\n\n**Auto-chained:** the Signup and Login requests stash `accessToken` and `refreshToken` into collection variables via test scripts, so subsequent Refresh and Logout requests work without manual copy-paste.\n\n**Environments:** `baseUrl` defaults to `http://localhost:8080/v1`. For staging or production, override the variable on the request, in an environment, or via `kehdo-api.postman_environment.json` in the same folder.\n\nSee `contracts/openapi/kehdo.v1.yaml` for the canonical contract.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET /health — liveness probe",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Public liveness probe. Returns 200 with `{ status, version, timestamp }` when the API process is up. Distinct from `/actuator/health` (which checks downstream dependencies)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Auth — happy path",
+      "item": [
+        {
+          "name": "1. POST /auth/signup",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('accessToken', json.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', json.refreshToken);",
+                  "    pm.collectionVariables.set('userId', json.user.id);",
+                  "    pm.test('returns 201 Created', () => pm.response.to.have.status(201));",
+                  "    pm.test('access token is JWT-shaped', () => pm.expect(json.accessToken).to.match(/^eyJ[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$/));",
+                  "    pm.test('refresh token uses rt_ prefix', () => pm.expect(json.refreshToken).to.match(/^rt_[0-9a-f]{64}$/));",
+                  "    pm.test('expiresIn matches 5-minute TTL', () => pm.expect(json.expiresIn).to.be.within(290, 300));",
+                  "    pm.test('user.plan defaults to STARTER', () => pm.expect(json.user.plan).to.equal('STARTER'));",
+                  "} else {",
+                  "    pm.test('signup returned non-201 — see body', () => pm.expect.fail('status was ' + pm.response.code + ': ' + pm.response.text()));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"alex+{{$randomInt}}@example.com\",\n  \"password\": \"correct-horse-battery-staple\",\n  \"displayName\": \"Alex\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/signup",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "signup"]
+            },
+            "description": "Creates a new account. Email is uniquified per run via `{{$randomInt}}` so re-running doesn't hit the existing-email branch.\n\nResponse 201 returns `{ accessToken, refreshToken, expiresIn, user }`. The test script captures `accessToken` and `refreshToken` into collection variables for the subsequent Logout request."
+          },
+          "response": []
+        },
+        {
+          "name": "2. POST /auth/login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('accessToken', json.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', json.refreshToken);",
+                  "    pm.test('returns 200 OK', () => pm.response.to.have.status(200));",
+                  "} else {",
+                  "    pm.test('login returned non-200 — see body', () => pm.expect.fail('status was ' + pm.response.code + ': ' + pm.response.text()));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"alex@example.com\",\n  \"password\": \"correct-horse-battery-staple\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Sign in with email + password. Returns the same `AuthResponse` shape as signup. Run Signup first (with a known email + password) so this request has credentials to authenticate against."
+          },
+          "response": []
+        },
+        {
+          "name": "3. POST /auth/refresh",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    const oldRefresh = pm.collectionVariables.get('refreshToken');",
+                  "    pm.collectionVariables.set('accessToken', json.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', json.refreshToken);",
+                  "    pm.test('returns 200 OK', () => pm.response.to.have.status(200));",
+                  "    pm.test('rotates refresh token (new value)', () => pm.expect(json.refreshToken).to.not.equal(oldRefresh));",
+                  "} else {",
+                  "    pm.test('refresh returned non-200 — see body', () => pm.expect.fail('status was ' + pm.response.code + ': ' + pm.response.text()));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"]
+            },
+            "description": "Exchange a refresh token for a new access token (and rotated refresh token). The previous refresh token is invalidated server-side.\n\nReads `{{refreshToken}}` from collection variables — populated by Signup or Login. The test script verifies the returned refresh token is *different* from the one sent (rotation per SECURITY.md)."
+          },
+          "response": []
+        },
+        {
+          "name": "4. POST /auth/logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('returns 204 No Content', () => pm.response.to.have.status(204));",
+                  "// Clear stashed tokens so subsequent runs don't reuse a revoked session.",
+                  "pm.collectionVariables.unset('accessToken');",
+                  "pm.collectionVariables.unset('refreshToken');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            },
+            "description": "Revoke the current session, identified by the access token's `sid` claim. Returns 204 No Content. The session row in Postgres gets `revoked_at` stamped; the access token itself can still be presented until its 5-minute exp, but any refresh attempt will fail."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Auth — error cases",
+      "item": [
+        {
+          "name": "Signup with existing email → 409 EMAIL_ALREADY_REGISTERED",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('returns 409 Conflict', () => pm.response.to.have.status(409));",
+                  "const json = pm.response.json();",
+                  "pm.test('error code is EMAIL_ALREADY_REGISTERED', () => pm.expect(json.error.code).to.equal('EMAIL_ALREADY_REGISTERED'));",
+                  "pm.test('error message present', () => pm.expect(json.error.message).to.be.a('string').and.not.be.empty);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"alex@example.com\",\n  \"password\": \"correct-horse-battery-staple\",\n  \"displayName\": \"Alex\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/signup",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "signup"]
+            },
+            "description": "Run after the happy-path Signup (with email `alex@example.com`). Server should reject with 409 + the error envelope `{ error: { code, message, traceId } }`."
+          },
+          "response": []
+        },
+        {
+          "name": "Signup with invalid input → 400 BAD_REQUEST",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('returns 400 Bad Request', () => pm.response.to.have.status(400));",
+                  "const json = pm.response.json();",
+                  "pm.test('error code is BAD_REQUEST', () => pm.expect(json.error.code).to.equal('BAD_REQUEST'));",
+                  "pm.test('details map present with field errors', () => pm.expect(json.error.details).to.be.an('object'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"not-an-email\",\n  \"password\": \"short\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/signup",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "signup"]
+            },
+            "description": "Bean Validation rejects the email format (`@Email`) and password length (`@Size(min=8)`). The response body's `error.details` carries per-field messages."
+          },
+          "response": []
+        },
+        {
+          "name": "Login with wrong password → 401 INVALID_CREDENTIALS",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('returns 401 Unauthorized', () => pm.response.to.have.status(401));",
+                  "const json = pm.response.json();",
+                  "pm.test('error code is INVALID_CREDENTIALS', () => pm.expect(json.error.code).to.equal('INVALID_CREDENTIALS'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"alex@example.com\",\n  \"password\": \"WRONG-PASSWORD\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login with the right email but wrong password. Server returns the same INVALID_CREDENTIALS as 'unknown email' so we don't leak whether the email exists."
+          },
+          "response": []
+        },
+        {
+          "name": "Login with unknown email → 401 INVALID_CREDENTIALS",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('returns 401 Unauthorized', () => pm.response.to.have.status(401));",
+                  "const json = pm.response.json();",
+                  "pm.test('error code is INVALID_CREDENTIALS (no info leak)', () => pm.expect(json.error.code).to.equal('INVALID_CREDENTIALS'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ghost@example.com\",\n  \"password\": \"any-password-here\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Verifies the no-info-leak property: the response should be IDENTICAL to 'wrong password' — same status, same code, same message — so attackers can't enumerate registered emails."
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh with bad token → 401 REFRESH_TOKEN_INVALID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('returns 401 Unauthorized', () => pm.response.to.have.status(401));",
+                  "const json = pm.response.json();",
+                  "pm.test('error code is REFRESH_TOKEN_INVALID', () => pm.expect(json.error.code).to.equal('REFRESH_TOKEN_INVALID'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"rt_0000000000000000000000000000000000000000000000000000000000000000\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"]
+            },
+            "description": "Refresh with a syntactically valid but unknown refresh token. Server should hash it (no DB hit on the raw token), find no matching session row, and return 401 REFRESH_TOKEN_INVALID."
+          },
+          "response": []
+        },
+        {
+          "name": "Logout without auth → 401 UNAUTHORIZED",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('returns 401 Unauthorized', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            },
+            "description": "Logout without an Authorization header. SecurityConfig requires authentication on /auth/logout (unlike /signup, /login, /refresh which are public), so unauthenticated requests get 401 from the security chain before hitting any handler."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/v1",
+      "type": "string",
+      "description": "Override per environment (staging: https://api.staging.kehdo.app/v1, prod: https://api.kehdo.app/v1)."
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string",
+      "description": "Auto-populated by Signup / Login / Refresh response handlers. Don't set manually."
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string",
+      "description": "Auto-populated by Signup / Login / Refresh response handlers. Don't set manually."
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string",
+      "description": "Captured from Signup response (UUIDv7)."
+    }
+  ]
+}
