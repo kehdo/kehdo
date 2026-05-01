@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Instrument_Serif } from "next/font/google";
+import { Inter, Instrument_Serif, Jost } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
@@ -19,13 +19,20 @@ const instrumentSerif = Instrument_Serif({
   display: "swap",
 });
 
+const jost = Jost({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-jost",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://kehdo.app"),
-  title: "kehdo — Reply with quiet confidence.",
+  title: "kehdo — Just Say It.",
   description:
     "AI-powered reply generator for chat screenshots. Drop a screenshot from WhatsApp, iMessage, Slack, or Instagram. Get the perfect reply in seconds.",
   openGraph: {
-    title: "kehdo — Reply with quiet confidence.",
+    title: "kehdo — Just Say It.",
     description:
       "Drop a chat screenshot, get the perfect reply in seconds. 5 free replies/day, forever.",
     url: "https://kehdo.app",
@@ -35,7 +42,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "kehdo — Reply with quiet confidence.",
+    title: "kehdo — Just Say It.",
     description: "Drop a chat screenshot, get the perfect reply in seconds.",
   },
 };
@@ -46,7 +53,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${instrumentSerif.variable}`}>
+    <html
+      lang="en"
+      className={`${inter.variable} ${instrumentSerif.variable} ${jost.variable}`}
+    >
       <body>
         <Nav />
         {children}

@@ -25,6 +25,9 @@ const config: Config = {
         sans: ["Inter", "system-ui", "sans-serif"],
         serif: ["Instrument Serif", "Georgia", "serif"],
         mono: ["JetBrains Mono", "ui-monospace", "monospace"],
+        // Brand identity font — wordmark "kehdo" + "JUST · SAY · IT" tagline only.
+        // Don't use for body text; that stays sans (Inter).
+        jost: ["var(--font-jost)", "Inter", "system-ui", "sans-serif"],
       },
       backgroundImage: {
         "aurora-gradient":
