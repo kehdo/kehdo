@@ -89,6 +89,34 @@ Codes defined in `errors/codes.yaml` with i18n keys. Never invent inline.
 
 ---
 
+## 📦 Implementation status
+
+This is the gap between what the spec defines and what the backend
+currently implements. Spec drift is fine if a frontend can read the
+contract and know "this isn't shipped yet."
+
+| Path | Method | Spec | Backend | Notes |
+|---|---|---|---|---|
+| `/health` | GET | ✅ | ✅ | Phase 2 — liveness probe at `/v1/health` |
+| `/auth/signup` | POST | ✅ | ✅ | Phase 2 — also rejects disposable-email domains (422 `EMAIL_DOMAIN_NOT_ALLOWED`) |
+| `/auth/login` | POST | ✅ | ✅ | Phase 2 |
+| `/auth/google` | POST | ✅ | ❌ | DEFERRED — backend will return `501 Not Implemented` until social auth ships post-Phase-2 |
+| `/auth/refresh` | POST | ✅ | ✅ | Phase 2 — rotates refresh token in place |
+| `/auth/logout` | POST | ✅ | ✅ | Phase 2 — requires Bearer JWT |
+| `/me` | GET | ✅ | ❌ | Not yet — planned alongside or just after Phase 3 (Android profile screen) |
+| `/me/usage` | GET | ✅ | ❌ | Not yet — depends on quota enforcement (Phase 4) |
+| `/conversations` | POST/GET | ✅ | ❌ | Phase 4 |
+| `/conversations/{id}` | GET/DELETE | ✅ | ❌ | Phase 4 |
+| `/conversations/{id}/generate` | POST | ✅ | ❌ | Phase 4 — depends on `:ai` module + ADR 0006 implementation |
+| `/replies/{id}/refine` | POST | ✅ | ❌ | Phase 4 |
+| `/tones` | GET | ✅ | ❌ | Phase 4 |
+
+Keep this table accurate when endpoints flip from spec-only to implemented.
+Out-of-date entries are worse than missing ones — an Android dev who reads
+"❌ Not yet" knows to mock; "✅ Phase 2" they trust.
+
+---
+
 ## 🚫 Do NOT
 
 - Edit `kehdo.v1.yaml` without updating CHANGELOG for breaking changes

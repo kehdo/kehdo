@@ -234,6 +234,43 @@
           "response": []
         },
         {
+          "name": "Signup with disposable email → 422 EMAIL_DOMAIN_NOT_ALLOWED",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('returns 422 Unprocessable Entity', () => pm.response.to.have.status(422));",
+                  "const json = pm.response.json();",
+                  "pm.test('error code is EMAIL_DOMAIN_NOT_ALLOWED', () => pm.expect(json.error.code).to.equal('EMAIL_DOMAIN_NOT_ALLOWED'));",
+                  "pm.test('details.domain is the rejected domain', () => pm.expect(json.error.details.domain).to.equal('mailinator.com'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"burner@mailinator.com\",\n  \"password\": \"correct-horse-battery-staple\",\n  \"displayName\": \"Anon\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/signup",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "signup"]
+            },
+            "description": "Disposable-email domains (Mailinator, 10minutemail, GuerrillaMail, ~250 known throwaway services) are blocked at signup. The check runs before any DB hit, so it doesn't leak whether the email already exists. Domain comparison is case-insensitive."
+          },
+          "response": []
+        },
+        {
           "name": "Signup with invalid input → 400 BAD_REQUEST",
           "event": [
             {

@@ -1,0 +1,10 @@
+{
+  "error": {
+    "code": "EMAIL_DOMAIN_NOT_ALLOWED",
+    "message": "Use a permanent email address — disposable email services aren't supported.",
+    "traceId": "01HXY7F2A3B4C5D6E7F8G9H0J1K2",
+    "details": {
+      "domain": "mailinator.com"
+    }
+  }
+}

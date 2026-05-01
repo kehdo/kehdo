@@ -1,6 +1,7 @@
 package app.kehdo.backend.auth.service;
 
 import app.kehdo.backend.auth.error.EmailAlreadyRegisteredException;
+import app.kehdo.backend.auth.error.EmailDomainNotAllowedException;
 import app.kehdo.backend.auth.error.InvalidCredentialsException;
 import app.kehdo.backend.auth.error.RefreshTokenInvalidException;
 import app.kehdo.backend.auth.jwt.JwtProperties;
@@ -8,6 +9,7 @@ import app.kehdo.backend.auth.jwt.JwtService;
 import app.kehdo.backend.auth.session.Session;
 import app.kehdo.backend.auth.session.SessionRepository;
 import app.kehdo.backend.auth.token.RefreshTokens;
+import app.kehdo.backend.auth.validation.DisposableEmailValidator;
 import app.kehdo.backend.common.Ids;
 import app.kehdo.backend.user.User;
 import app.kehdo.backend.user.UserPlan;
@@ -38,6 +40,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final JwtProperties jwtProperties;
+    private final DisposableEmailValidator disposableEmailValidator;
     private final Clock clock;
 
     public AuthService(
@@ -46,17 +49,27 @@ public class AuthService {
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
             JwtProperties jwtProperties,
+            DisposableEmailValidator disposableEmailValidator,
             Clock clock) {
         this.userRepository = userRepository;
         this.sessionRepository = sessionRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.jwtProperties = jwtProperties;
+        this.disposableEmailValidator = disposableEmailValidator;
         this.clock = clock;
     }
 
     @Transactional
     public AuthResult signup(SignupCommand cmd) {
+        // Block disposable email domains before any DB hit; cheaper to reject
+        // these early and avoids leaking timing info about whether the email
+        // already exists.
+        String blockedDomain = disposableEmailValidator.findBlockedDomain(cmd.email());
+        if (blockedDomain != null) {
+            throw new EmailDomainNotAllowedException(blockedDomain);
+        }
+
         if (userRepository.existsActiveByEmail(cmd.email())) {
             throw new EmailAlreadyRegisteredException();
         }

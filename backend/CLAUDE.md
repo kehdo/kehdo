@@ -35,7 +35,7 @@ backend/
 │   ├── orchestrator/
 │   ├── ocr/              (Google Vision adapter)
 │   ├── speaker/          (2-stage attribution)
-│   ├── llm/              (OpenAI + Anthropic facade)
+│   ├── llm/              (Vertex AI + OpenAI facade per ADR 0006)
 │   ├── prompt/           (externalized templates)
 │   └── safety/           (moderation)
 ├── infra/                :infra — rate-limit, S3, metrics
@@ -106,13 +106,97 @@ When touching the `:ai` module:
 ## 🏃 Running locally
 
 ```bash
-cd backend
-docker-compose up -d              # postgres + redis + minio
-./gradlew :app:bootRun             # http://localhost:8080
+# Postgres + Redis (from repo root)
+cd infra
+docker compose up -d              # Compose v2 syntax — note no hyphen
+
+# Backend
+cd ../backend
+./gradlew :app:bootRun             # → http://localhost:8080/v1/health
 ./gradlew check                    # all tests
 ```
 
-Swagger UI: `http://localhost:8080/swagger-ui.html`
+Smoke test the auth API via the Postman collection at
+[`/docs/postman/`](../docs/postman/) or `curl.exe`:
+
+```bash
+curl.exe http://localhost:8080/v1/health
+curl.exe -X POST http://localhost:8080/v1/auth/signup \
+  -H "Content-Type: application/json" \
+  -d '{"email":"alex@example.com","password":"correct-horse-battery-staple"}'
+```
+
+(Live Swagger UI is not currently wired — the OpenAPI spec is the
+canonical reference at `/contracts/openapi/kehdo.v1.yaml`.)
+
+---
+
+## 📦 Phase 2 status — auth endpoints SHIPPED
+
+Released as `v0.3.0`. The following are LIVE behind `/v1/`:
+
+| Endpoint | Method | Status |
+|---|---|---|
+| `/health` | GET | ✅ public liveness probe |
+| `/auth/signup` | POST | ✅ creates STARTER user; rejects disposable-email domains with `422 EMAIL_DOMAIN_NOT_ALLOWED` |
+| `/auth/login` | POST | ✅ same-shaped error for wrong password and unknown email (no info leak) |
+| `/auth/refresh` | POST | ✅ rotates refresh token in place; same session id |
+| `/auth/logout` | POST | ✅ requires Bearer JWT; revokes session via the `sid` claim |
+| `/actuator/{health,info,metrics,prometheus}` | GET | ✅ public ops probes |
+
+Implementation map:
+- **`:common/error/`** — `ApiException` (typed; carries code + httpStatus +
+  optional details map), `ErrorEnvelope` + `ApiError` records, `ErrorCode` constants
+- **`:user/`** — `User` entity, `UserRepository` (active-only finders that
+  exclude soft-deleted rows), `UserPlan` enum
+- **`:auth/session/`** — `Session` entity (rotates in place; `revoke()` for
+  logout), `SessionRepository` (`findByRefreshTokenHash` for O(1) refresh)
+- **`:auth/jwt/`** — `JwtProperties`, `JwtKeys` (loads PEM from configured
+  paths or falls back to ephemeral RSA-2048 in-memory keypair), `JwtService`
+  (issue + validate, uses injected Clock so tests are deterministic)
+- **`:auth/token/RefreshTokens`** — `generate()` returns `rt_<64hex>`,
+  `hash()` SHA-256 hexes for DB storage; raw token only returned to client once
+- **`:auth/validation/DisposableEmailValidator`** — loads
+  `disposable-email-domains.txt` from classpath at startup (~250 entries);
+  fail-fast if missing; case-insensitive domain match
+- **`:auth/web/JwtAuthenticationFilter`** — `OncePerRequestFilter`; pulls
+  `Authorization: Bearer <jwt>`; sets userId + sessionId on the request
+  attribute (via constants `USER_ID_ATTRIBUTE` / `SESSION_ID_ATTRIBUTE`)
+- **`:auth/service/AuthService`** — orchestrates signup, login, refresh, logout
+- **`:api/auth/AuthController`** — REST surface; controllers always live in `:api/`
+- **`:api/error/GlobalExceptionHandler`** — `@RestControllerAdvice` maps
+  every exception (typed `ApiException`, validation, malformed JSON, Spring
+  Security auth/access, 404, fallback `Exception`) → `ErrorEnvelope` JSON
+- **`:app/config/SecurityConfig`** — wires JWT filter ahead of
+  `UsernamePasswordAuthenticationFilter`; `/auth/{signup,login,refresh}`
+  permitted, `/auth/logout` requires authentication
+- **`:infra/logging/RequestLoggingFilter`** — logs path + status + duration;
+  generates traceId in MDC; **never** reads request or response bodies
+
+Schema in Flyway `V1__init_users_sessions.sql`:
+- `users` (UUIDv7 id, email, BCrypt password_hash, plan, soft delete via
+  `deleted_at`, unique-on-`LOWER(email)` only when active)
+- `sessions` (UUIDv7 id, user_id FK, refresh_token_hash VARCHAR(64),
+  expires_at, last_used_at, revoked_at; partial index for active sessions)
+
+Tests in `:auth/src/test/java/`:
+- `RefreshTokensTest` — format, length, determinism (5 tests)
+- `JwtServiceTest` — issuance + validation, expiry, key mismatch, issuer
+  mismatch, garbage input (5 tests)
+- `AuthServiceTest` — happy paths + every error branch for all 4 flows
+  (13 tests, including disposable-email block)
+- `DisposableEmailValidatorTest` — blocklist load + lookup (7 tests)
+
+**What's NOT yet implemented in the backend** (tracked in
+[`/docs/BACKLOG.md`](../docs/BACKLOG.md)):
+- `/auth/google` (Google Sign-In) — defined in OpenAPI, deferred per
+  `contracts/CHANGELOG.md`
+- Password reset, email confirmation — need email provider first
+- 2FA / TOTP — post-launch
+- Daily quota enforcement — depends on Phase 4 AI pipeline
+- Per-IP / per-user rate limiting on auth endpoints — Redis token bucket scaffolded but not wired
+- Conversation, reply, tone endpoints — Phase 4
+- AWS deployment to `api.staging.kehdo.app` / `api.kehdo.app`
 
 ---
 
