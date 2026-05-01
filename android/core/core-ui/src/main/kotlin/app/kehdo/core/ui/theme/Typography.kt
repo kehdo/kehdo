@@ -4,7 +4,6 @@ import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 
 /**
@@ -15,60 +14,68 @@ import androidx.compose.ui.unit.sp
  *
  * For the scaffold we use FontFamily.Default; in Phase 0 the generator will
  * set up Inter via androidx.compose.ui.text.googlefonts.
+ *
+ * All TextUnits use `.sp` — never `.em`. Compose's M3 components (e.g.
+ * OutlinedTextField) lerp between styles we override and styles we don't,
+ * and the M3 defaults are all `.sp`. Mixing `.em` and `.sp` in the same
+ * theme makes those lerps throw `IllegalArgumentException: Cannot perform
+ * operation for Em and Sp`.
  */
 val KehdoTypography = Typography(
     displayLarge = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Bold,
         fontSize = 96.sp,
-        lineHeight = 0.95.em,
-        letterSpacing = (-0.04).em
+        lineHeight = 91.sp,
+        letterSpacing = (-3.8).sp
     ),
     displayMedium = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Bold,
         fontSize = 72.sp,
-        lineHeight = 0.95.em,
-        letterSpacing = (-0.04).em
+        lineHeight = 68.sp,
+        letterSpacing = (-2.9).sp
     ),
     headlineLarge = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Bold,
         fontSize = 48.sp,
-        lineHeight = 1.1.em,
-        letterSpacing = (-0.03).em
+        lineHeight = 53.sp,
+        letterSpacing = (-1.4).sp
     ),
     headlineMedium = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Bold,
         fontSize = 36.sp,
-        lineHeight = 1.15.em,
-        letterSpacing = (-0.02).em
+        lineHeight = 41.sp,
+        letterSpacing = (-0.7).sp
     ),
     headlineSmall = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.SemiBold,
         fontSize = 24.sp,
-        lineHeight = 1.2.em,
-        letterSpacing = (-0.01).em
+        lineHeight = 29.sp,
+        letterSpacing = (-0.2).sp
     ),
     bodyLarge = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
         fontSize = 16.sp,
-        lineHeight = 1.55.em
+        lineHeight = 25.sp,
+        letterSpacing = 0.5.sp
     ),
     bodyMedium = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
         fontSize = 14.sp,
-        lineHeight = 1.5.em
+        lineHeight = 21.sp,
+        letterSpacing = 0.25.sp
     ),
     labelLarge = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Medium,
         fontSize = 12.sp,
-        lineHeight = 1.4.em,
-        letterSpacing = 0.02.em
+        lineHeight = 17.sp,
+        letterSpacing = 0.2.sp
     )
 )
