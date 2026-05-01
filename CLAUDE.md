@@ -40,11 +40,21 @@ Hero gradient:
   linear-gradient(135deg, #9C5BFF 0%, #EC4899 50%, #F59E0B 100%)
 
 Fonts:
-  Primary:  Inter (400, 500, 600, 700, 800, 900)
+  Primary:  Inter (400, 500, 600, 700, 800, 900)            — body text + UI
   Accent:   Instrument Serif Italic (gradient headlines only)
+  Brand:    Jost (400, 500, 600, 700)                       — wordmark "kehdo" + tagline only
+
+Tagline (locked):
+  English:  Just Say It           (full-form: "Just · Say · It" letter-spaced uppercase under the wordmark)
+  Hindi:    कह दो                  (used alongside English in the Footer)
+
+Logo:
+  Source of truth: /design/assets/logo/kehdo-mark.svg
+  Lockup variants: mark-only, mark+wordmark, mark+wordmark+tagline
+  See /design/assets/logo/README.md for usage rules.
 ```
 
-**Rule:** All color and font values come from `/design/tokens/`. Never hardcode hex values in platform code. The token files generate native code on every build.
+**Rule:** All color, font, and logo values come from `/design/`. Never hardcode hex values in platform code. The token files generate native code on every build. The logo SVG is the canonical asset — no other "kehdo" wordmark renderings.
 
 ---
 

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Logo } from "./Logo";
 
 const PRODUCT_LINKS = [
   { href: "#how-it-works", label: "How it works" },
@@ -19,16 +20,16 @@ export function Footer() {
       <div className="mx-auto max-w-6xl px-6 py-16">
         <div className="grid grid-cols-2 gap-10 md:grid-cols-12">
           <div className="col-span-2 md:col-span-5">
-            <Link
-              href="/"
-              className="text-2xl font-bold tracking-tight"
-              aria-label="kehdo home"
-            >
-              <span className="aurora-text">kehdo</span>
+            <Link href="/" aria-label="kehdo home">
+              <Logo variant="wordmark" size="lg" />
             </Link>
-            <p className="mt-3 max-w-xs text-sm text-moonlight/45">
-              Reply with quiet confidence. AI-powered chat reply generator for
-              screenshots.
+            <p className="mt-4 font-jost text-xs uppercase tracking-[0.32em] text-moonlight/55">
+              Just<span className="mx-1.5 opacity-70">·</span>Say
+              <span className="mx-1.5 opacity-70">·</span>It
+            </p>
+            <p className="mt-5 max-w-xs text-sm text-moonlight/45">
+              AI-powered chat reply generator for screenshots. Drop, parse,
+              reply — in any tone.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <span
@@ -88,7 +89,7 @@ export function Footer() {
             © {new Date().getFullYear()} kehdo. All rights reserved.
           </p>
           <p className="text-xs text-moonlight/45 [font-feature-settings:'liga']">
-            कह दो — say it.
+            कह दो — Just Say It.
           </p>
         </div>
       </div>
