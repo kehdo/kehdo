@@ -36,7 +36,7 @@ CREATE INDEX idx_users_deleted_at
 CREATE TABLE sessions (
     id                  UUID         PRIMARY KEY,
     user_id             UUID         NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    refresh_token_hash  CHAR(64)     NOT NULL,  -- hex of SHA-256(refresh_token)
+    refresh_token_hash  VARCHAR(64)  NOT NULL,  -- hex of SHA-256(refresh_token)
     user_agent          VARCHAR(500),
     ip_address          INET,
     expires_at          TIMESTAMPTZ  NOT NULL,
