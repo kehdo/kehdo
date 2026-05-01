@@ -75,6 +75,10 @@ export function Pricing() {
             Start free. Upgrade when you outgrow it. Cancel any time — your
             replies are yours.
           </p>
+          <p className="mt-4 inline-flex items-center gap-2 rounded-full border border-purple/30 bg-purple/10 px-4 py-1.5 text-xs font-medium text-purple-bright">
+            <span className="h-1.5 w-1.5 rounded-full bg-purple-bright" />
+            Founding-member rates · standard pricing applies after closed beta
+          </p>
         </div>
 
         <div className="mt-16 grid gap-6 lg:grid-cols-3">
@@ -139,6 +143,19 @@ export function Pricing() {
             </div>
           ))}
         </div>
+
+        <p className="mx-auto mt-10 max-w-2xl text-center text-xs leading-relaxed text-moonlight/45">
+          Sign up before public launch and your rate is locked in for as long
+          as your subscription stays active — even when standard pricing
+          increases. See the{" "}
+          <Link
+            href="/terms"
+            className="text-purple-bright underline-offset-4 hover:underline"
+          >
+            grandfathering clause in our Terms
+          </Link>{" "}
+          for details.
+        </p>
       </div>
     </section>
   );
