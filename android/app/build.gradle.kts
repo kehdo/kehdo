@@ -58,6 +58,9 @@ dependencies {
     implementation(project(":core:datastore"))
     implementation(project(":core:analytics"))
 
+    // Domain modules — :app uses domain use-cases directly for the root nav decider
+    implementation(project(":domain:auth"))
+
     // Data modules — only the :app module wires data implementations
     implementation(project(":data:auth"))
     implementation(project(":data:conversation"))
@@ -76,6 +79,7 @@ dependencies {
     // AndroidX
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime)
+    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.activity.compose)
     implementation(libs.navigation.compose)
     implementation(libs.hilt.navigation.compose)
