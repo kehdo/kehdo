@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "EMAIL_ALREADY_REGISTERED",
+    "message": "An account with this email already exists. Sign in instead.",
+    "traceId": "01HXY7F2A3B4C5D6E7F8G9H0J1K2"
+  }
+}
