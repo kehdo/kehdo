@@ -59,6 +59,7 @@ public class JwtService {
      */
     public ValidatedAccessToken validateAccess(String token) {
         Jws<Claims> jws = Jwts.parser()
+                .clock(() -> Date.from(clock.instant()))   // honor the injected clock
                 .verifyWith(keys.publicKey())
                 .requireIssuer(props.issuer())
                 .build()
