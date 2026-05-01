@@ -30,11 +30,11 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://kehdo.app"),
   title: "kehdo — Just Say It.",
   description:
-    "AI-powered reply generator for chat screenshots. Drop a screenshot from WhatsApp, iMessage, Slack, or Instagram. Get the perfect reply in seconds.",
+    "Reply faster, sound like you. AI that learns your voice and crafts replies in any tone — for chat screenshots today, keyboard / browser / team chat soon.",
   openGraph: {
     title: "kehdo — Just Say It.",
     description:
-      "Drop a chat screenshot, get the perfect reply in seconds. 5 free replies/day, forever.",
+      "Reply faster, sound like you. AI that learns your voice — for chat screenshots today, every conversation tomorrow. 5 free replies/day, forever.",
     url: "https://kehdo.app",
     siteName: "kehdo",
     locale: "en_US",
@@ -43,7 +43,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "kehdo — Just Say It.",
-    description: "Drop a chat screenshot, get the perfect reply in seconds.",
+    description:
+      "AI that learns your voice and crafts replies in any tone — for chat screenshots today, every conversation tomorrow.",
   },
 };
 

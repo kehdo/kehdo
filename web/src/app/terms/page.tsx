@@ -104,10 +104,47 @@ export default function TermsPage() {
             issue prorated refunds for partial months unless required by law in
             your jurisdiction.
           </p>
+        </Section>
+
+        <Section title="Pricing and the grandfathering promise">
+          <p>
+            <strong className="text-moonlight">
+              Your sign-up rate is locked.
+            </strong>{" "}
+            For as long as your paid subscription stays active and uninterrupted,
+            we honor the price you paid at sign-up — even if our standard pricing
+            increases later. New customers may pay more; existing customers
+            don&rsquo;t.
+          </p>
           <p className="mt-4">
-            We may change pricing, but we&rsquo;ll give existing subscribers at
-            least 30 days&rsquo; notice via email and grandfather the old
-            price for the next billing cycle.
+            <strong className="text-moonlight">Founding-member rates.</strong>{" "}
+            Anyone subscribing during the closed beta or in the first wave after
+            public launch qualifies as a founding member. This is a real
+            commitment, not a marketing label — see the rate displayed on the{" "}
+            <a
+              className="text-purple-bright underline-offset-4 hover:underline"
+              href="/#pricing"
+            >
+              pricing page
+            </a>{" "}
+            at sign-up; that&rsquo;s your locked rate.
+          </p>
+          <p className="mt-4">
+            <strong className="text-moonlight">If you cancel and resubscribe</strong>,
+            you&rsquo;re billed at the standard rate at the time of resubscription,
+            not your old grandfathered rate. The grandfathering applies only to
+            continuous subscriptions.
+          </p>
+          <p className="mt-4">
+            <strong className="text-moonlight">If we change pricing</strong>,
+            we&rsquo;ll give existing subscribers at least 30 days&rsquo; notice
+            via email. Existing subscribers continue at their grandfathered rate
+            unless they actively switch plans.
+          </p>
+          <p className="mt-4">
+            <strong className="text-moonlight">No false reference prices.</strong>{" "}
+            We don&rsquo;t display crossed-out &ldquo;was&rdquo; prices that
+            nobody ever paid. The price you see is the real price.
           </p>
         </Section>
 

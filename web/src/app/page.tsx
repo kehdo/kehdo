@@ -27,15 +27,17 @@ export default function Home() {
         </div>
 
         <h1 className="mt-8 text-5xl font-bold leading-[0.95] tracking-tight md:text-7xl lg:text-8xl">
-          Reply with{" "}
+          Reply faster.{" "}
           <span className="aurora-text font-serif italic">
-            quiet confidence.
+            Sound like you.
           </span>
         </h1>
 
         <p className="mt-8 max-w-2xl text-xl leading-relaxed text-moonlight/65">
-          Drop a chat screenshot from WhatsApp, iMessage, Slack, or Instagram.
-          Get four ranked replies in seconds — in any tone you choose.
+          AI that learns your voice and crafts replies in any tone, on any
+          surface. Today: chat screenshots from WhatsApp, iMessage, Slack, and
+          more. Soon: keyboard, browser, and team-chat surfaces — same voice,
+          everywhere you reply.
         </p>
 
         <div className="mt-12 flex flex-wrap gap-4">
