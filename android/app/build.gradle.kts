@@ -20,6 +20,8 @@ android {
             isMinifyEnabled = false
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
+            manifestPlaceholders["BUILD_TYPE"] = "debug"
+            manifestPlaceholders["SENTRY_DSN"] = ""
         }
         release {
             isMinifyEnabled = true
@@ -29,6 +31,10 @@ android {
                 "proguard-rules.pro"
             )
             signingConfig = signingConfigs.getByName("debug")
+            manifestPlaceholders["BUILD_TYPE"] = "release"
+            // Sentry DSN is injected by CI (e.g. via `-PSENTRY_DSN=...` or env). Empty disables Sentry.
+            manifestPlaceholders["SENTRY_DSN"] =
+                (project.findProperty("SENTRY_DSN") as String?) ?: ""
         }
     }
 
@@ -73,11 +79,6 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.navigation.compose)
     implementation(libs.hilt.navigation.compose)
-
-    // Firebase
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.auth)
-    implementation(libs.firebase.analytics)
 
     // Sentry
     implementation(libs.sentry.android)
