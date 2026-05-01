@@ -19,13 +19,13 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         setContent {
-            KehdoApp()
+            KehdoAppContent()
         }
     }
 }
 
 @Composable
-private fun KehdoApp() {
+private fun KehdoAppContent() {
     KehdoTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
             RootNavGraph()

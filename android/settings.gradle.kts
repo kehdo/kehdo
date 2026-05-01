@@ -15,6 +15,11 @@ pluginManagement {
     }
 }
 
+plugins {
+    // Auto-provisions a JDK 17 toolchain when the host doesn't have one.
+    id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
+}
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
