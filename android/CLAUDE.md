@@ -34,7 +34,7 @@ This directory holds the kehdo Android app. Open `android/` (not the repo root) 
 | Image loading | Coil | 2.5.0 | Kotlin-first |
 | Background work | WorkManager | 2.9.0 | Retry + constraints |
 | OCR (fallback) | Google ML Kit | 16.0 | On-device for Pro users |
-| Auth | Firebase Auth | BOM 32.7 | Google sign-in + email |
+| Auth | kehdo backend `/v1/auth/*` | (none — no Firebase) | Backend-driven email + password; tokens in EncryptedSharedPreferences; refresh on 401. **NOT Firebase Auth.** |
 | Analytics | Mixpanel | 7.5.0 | Product analytics |
 | Crash reports | Sentry | 7.3.0 | Error tracking |
 | Testing | JUnit 4 + MockK + Turbine | — | Idiomatic Kotlin testing |
@@ -85,6 +85,46 @@ android/
     ├── feature-profile/
     └── feature-paywall/
 ```
+
+---
+
+## 🔌 Backend integration
+
+The Android app talks to the kehdo backend at `/v1/*`. There is **no Firebase
+Auth** layer — auth flows hit `POST /v1/auth/{signup,login,refresh,logout}`
+directly. See [`/backend/CLAUDE.md`](../backend/CLAUDE.md) for the live
+endpoint list and [`/contracts/openapi/kehdo.v1.yaml`](../contracts/openapi/kehdo.v1.yaml)
+for the canonical contract.
+
+### API base URL — per build variant
+
+```kotlin
+// :app/build.gradle.kts buildTypes:
+// debug   → http://10.0.2.2:8080/v1   (Android emulator → host machine localhost)
+// staging → https://api.staging.kehdo.app/v1   (Phase 2.5 — when AWS deploys land)
+// release → https://api.kehdo.app/v1
+```
+
+Surface this via `BuildConfig.API_BASE_URL` so `:core:network` reads it
+without each module hardcoding URLs.
+
+### Auth token storage
+
+- Access token (JWT, 5-min TTL) — kept in memory in `:core:network` for the
+  current process; lost on process death (re-issued via refresh)
+- Refresh token (`rt_<64hex>`, 30-day TTL) — stored in
+  `EncryptedSharedPreferences` (hardware-backed via Android Keystore); never
+  written to logs or analytics events
+- On `401 UNAUTHORIZED`, the OkHttp authenticator hits `/auth/refresh` exactly
+  once; on success retries the original request, on failure clears tokens and
+  emits a `SignedOut` event to the auth state Flow
+
+### Cert pinning for `api.kehdo.app`
+
+Per [`SECURITY.md`](../SECURITY.md): production builds pin the certificate
+chain so a compromised CA can't MITM. Pinning lives in `:core:network`'s
+OkHttp config. Debug builds skip pinning so local backend (HTTP) and
+self-signed staging certs work.
 
 ---
 
@@ -170,7 +210,7 @@ fun ReplyScreenRoute() {
 }
 ```
 
-See `feature/feature-auth/SignInViewModel.kt` for a working example.
+See `feature/feature-auth/SignInViewModel.kt` for a working example *(file lands during Phase 3 — placeholder reference until then)*.
 
 ---
 

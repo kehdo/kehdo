@@ -11,6 +11,7 @@ Canonical request and response bodies referenced by the auth endpoints in
 |---|---|---|
 | `POST /auth/signup` | `201` | [signup-response-201.json](signup-response-201.json) |
 | `POST /auth/signup` | `409` | [signup-response-409.json](signup-response-409.json) — email already registered |
+| `POST /auth/signup` | `422` | [signup-response-422.json](signup-response-422.json) — disposable-email domain blocked (`EMAIL_DOMAIN_NOT_ALLOWED`) |
 | `POST /auth/login` | `200` | [login-response-200.json](login-response-200.json) |
 | `POST /auth/login` | `401` | [login-response-401.json](login-response-401.json) — invalid credentials |
 | `POST /auth/refresh` | `200` | [refresh-response-200.json](refresh-response-200.json) — note rotated `refreshToken` |

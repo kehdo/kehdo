@@ -41,6 +41,12 @@ paths:
       tags: [auth]
       security: []
       summary: Create a new account with email + password
+      description: |
+        Creates a new STARTER-tier account.
+
+        The email must not be on the disposable-email blocklist
+        (Mailinator, 10minutemail, GuerrillaMail, etc.). If it is,
+        the request is rejected with `422 EMAIL_DOMAIN_NOT_ALLOWED`.
       requestBody:
         required: true
         content:
@@ -58,6 +64,8 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '409':
           $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/EmailDomainNotAllowed'
 
   /auth/login:
     post:
@@ -484,6 +492,15 @@ components:
           schema: { $ref: '#/components/schemas/ErrorEnvelope' }
     RateLimited:
       description: Rate limit hit
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+    EmailDomainNotAllowed:
+      description: |
+        Email's domain is on the disposable-email blocklist
+        (e.g., Mailinator, 10minutemail). Error code is
+        `EMAIL_DOMAIN_NOT_ALLOWED`. The blocked domain is exposed in
+        `error.details.domain` for client-side UX.
       content:
         application/json:
           schema: { $ref: '#/components/schemas/ErrorEnvelope' }
