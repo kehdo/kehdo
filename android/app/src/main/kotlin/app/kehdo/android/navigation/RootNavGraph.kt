@@ -1,55 +1,80 @@
 package app.kehdo.android.navigation
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import app.kehdo.core.ui.theme.AuroraColors
 import app.kehdo.feature.auth.AuthRoute
 import app.kehdo.feature.auth.authGraph
+import app.kehdo.feature.home.HomeRoute
+import app.kehdo.feature.home.homeGraph
+import app.kehdo.feature.onboarding.OnboardingRoute
+import app.kehdo.feature.onboarding.onboardingGraph
 
 @Composable
-fun RootNavGraph() {
+fun RootNavGraph(
+    rootViewModel: RootViewModel = hiltViewModel()
+) {
     val navController = rememberNavController()
+    val isSignedIn by rootViewModel.isSignedIn.collectAsStateWithLifecycle()
+
+    // Watch for sign-out happening anywhere in the app and bounce back to auth.
+    LaunchedEffect(isSignedIn) {
+        if (isSignedIn == false) {
+            val current = navController.currentDestination?.parent?.route
+            val onAuthOrSplash = current == AuthRoute.GRAPH ||
+                current == OnboardingRoute.GRAPH ||
+                navController.currentDestination?.route == NavRoutes.SPLASH
+            if (!onAuthOrSplash) {
+                navController.navigate(AuthRoute.GRAPH) {
+                    popUpTo(navController.graph.id) { inclusive = true }
+                }
+            }
+        }
+    }
 
     NavHost(
         navController = navController,
-        startDestination = AuthRoute.GRAPH
+        startDestination = NavRoutes.SPLASH
     ) {
+        composable(NavRoutes.SPLASH) {
+            SplashScreen(
+                onSignedIn = {
+                    navController.navigate(HomeRoute.GRAPH) {
+                        popUpTo(NavRoutes.SPLASH) { inclusive = true }
+                    }
+                },
+                onSignedOut = {
+                    navController.navigate(OnboardingRoute.GRAPH) {
+                        popUpTo(NavRoutes.SPLASH) { inclusive = true }
+                    }
+                }
+            )
+        }
+        onboardingGraph(
+            onFinished = {
+                navController.navigate(AuthRoute.GRAPH) {
+                    popUpTo(OnboardingRoute.GRAPH) { inclusive = true }
+                }
+            }
+        )
         authGraph(
             navController = navController,
             onAuthSuccess = {
-                navController.navigate(NavRoutes.HOME) {
+                navController.navigate(HomeRoute.GRAPH) {
                     popUpTo(AuthRoute.GRAPH) { inclusive = true }
                 }
             }
         )
-        composable(NavRoutes.HOME) { HomePlaceholder() }
-    }
-}
-
-@Composable
-private fun HomePlaceholder() {
-    // Real home screen lands in PR 4 (`feat/and/home-shell`).
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("Signed in. Home screen coming next.", color = AuroraColors.Text)
+        homeGraph()
     }
 }
 
 object NavRoutes {
     const val SPLASH = "splash"
-    const val ONBOARDING = "onboarding"
-    const val AUTH = "auth"
-    const val HOME = "home"
-    const val UPLOAD = "upload"
-    const val REPLY = "reply/{conversationId}"
-    const val HISTORY = "history"
-    const val PROFILE = "profile"
-    const val PAYWALL = "paywall"
 }

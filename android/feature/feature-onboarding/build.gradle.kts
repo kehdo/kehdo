@@ -7,7 +7,5 @@ android {
 }
 
 dependencies {
-    implementation(project(":domain:auth"))
-    implementation(project(":domain:conversation"))
-    implementation(project(":domain:user"))
+    // Onboarding is currently UI-only; no domain deps yet.
 }

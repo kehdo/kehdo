@@ -65,6 +65,24 @@ class RealAuthRepository @Inject constructor(
         )
     }
 
+    override suspend fun tryRestoreSession(): Boolean {
+        val refresh = tokenStore.getRefreshToken() ?: return false
+        return runCatching {
+            authApi.refresh(
+                app.kehdo.core.network.api.dto.RefreshRequestDto(refresh)
+            )
+        }.fold(
+            onSuccess = { response ->
+                persistSession(response)
+                true
+            },
+            onFailure = {
+                clearSession()
+                false
+            }
+        )
+    }
+
     override suspend fun signOut(): Outcome<Unit> {
         val outcome = runCatching { authApi.signOut() }.fold(
             onSuccess = { Outcome.success(Unit) },
