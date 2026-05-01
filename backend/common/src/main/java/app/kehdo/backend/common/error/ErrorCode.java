@@ -18,6 +18,11 @@ public final class ErrorCode {
     public static final String CONFLICT = "CONFLICT";
     public static final String RATE_LIMIT_EXCEEDED = "RATE_LIMIT_EXCEEDED";
 
+    // Auth
+    public static final String EMAIL_ALREADY_REGISTERED = "EMAIL_ALREADY_REGISTERED";
+    public static final String INVALID_CREDENTIALS = "INVALID_CREDENTIALS";
+    public static final String REFRESH_TOKEN_INVALID = "REFRESH_TOKEN_INVALID";
+
     // 5xx — server errors
     public static final String INTERNAL_ERROR = "INTERNAL_ERROR";
 }
