@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="132" viewBox="0 0 40 44" fill="none" role="img" aria-label="kehdo logo mark">
+  <defs>
+    <linearGradient id="kehdoMarkGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#9C5BFF"/>
+      <stop offset="50%" stop-color="#EC4899"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
+    </linearGradient>
+  </defs>
+  <line x1="8" y1="6" x2="8" y2="34" stroke="url(#kehdoMarkGradient)" stroke-width="3.3" stroke-linecap="round"/>
+  <line x1="8" y1="20" x2="30" y2="6" stroke="url(#kehdoMarkGradient)" stroke-width="3.3" stroke-linecap="round"/>
+  <line x1="8" y1="20" x2="30" y2="34" stroke="url(#kehdoMarkGradient)" stroke-width="3.3" stroke-linecap="round"/>
+  <rect x="10" y="40" width="20" height="3" rx="1.5" fill="url(#kehdoMarkGradient)" opacity="0.4"/>
+</svg>

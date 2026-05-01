@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "kehdo — Reply with quiet confidence.";
+export const alt = "kehdo — Just Say It.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -23,22 +23,72 @@ export default async function Image() {
           fontFamily: "Inter",
         }}
       >
+        {/* Brand lockup top-left */}
         <div
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "12px",
-            fontSize: "36px",
-            fontWeight: 800,
-            letterSpacing: "-0.02em",
+            gap: "20px",
           }}
         >
+          {/* Logo mark */}
+          <svg
+            width="60"
+            height="66"
+            viewBox="0 0 40 44"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <defs>
+              <linearGradient id="ogMarkGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#9C5BFF" />
+                <stop offset="50%" stopColor="#EC4899" />
+                <stop offset="100%" stopColor="#F59E0B" />
+              </linearGradient>
+            </defs>
+            <line
+              x1="8"
+              y1="6"
+              x2="8"
+              y2="34"
+              stroke="url(#ogMarkGrad)"
+              strokeWidth="3.3"
+              strokeLinecap="round"
+            />
+            <line
+              x1="8"
+              y1="20"
+              x2="30"
+              y2="6"
+              stroke="url(#ogMarkGrad)"
+              strokeWidth="3.3"
+              strokeLinecap="round"
+            />
+            <line
+              x1="8"
+              y1="20"
+              x2="30"
+              y2="34"
+              stroke="url(#ogMarkGrad)"
+              strokeWidth="3.3"
+              strokeLinecap="round"
+            />
+            <rect
+              x="10"
+              y="40"
+              width="20"
+              height="3"
+              rx="1.5"
+              fill="url(#ogMarkGrad)"
+              opacity="0.4"
+            />
+          </svg>
           <span
             style={{
-              backgroundImage:
-                "linear-gradient(135deg, #9C5BFF 0%, #EC4899 50%, #F59E0B 100%)",
-              backgroundClip: "text",
-              color: "transparent",
+              fontSize: "44px",
+              fontWeight: 600,
+              letterSpacing: "-0.01em",
+              color: "#F5F3FF",
             }}
           >
             kehdo
@@ -49,29 +99,31 @@ export default async function Image() {
           <div
             style={{
               display: "flex",
-              fontSize: "92px",
-              fontWeight: 800,
-              lineHeight: 1.05,
+              fontSize: "120px",
+              fontWeight: 700,
+              lineHeight: 1.0,
               letterSpacing: "-0.03em",
-              maxWidth: "900px",
+              maxWidth: "1000px",
             }}
           >
             <span style={{ display: "flex", flexWrap: "wrap" }}>
-              Reply with{" "}
+              Just{" "}
               <span
                 style={{
                   fontStyle: "italic",
                   fontWeight: 400,
                   fontFamily: "serif",
                   marginLeft: "12px",
+                  marginRight: "12px",
                   backgroundImage:
                     "linear-gradient(135deg, #9C5BFF 0%, #EC4899 50%, #F59E0B 100%)",
                   backgroundClip: "text",
                   color: "transparent",
                 }}
               >
-                quiet confidence.
+                Say
               </span>
+              It.
             </span>
           </div>
 
@@ -111,6 +163,6 @@ export default async function Image() {
         </div>
       </div>
     ),
-    { ...size }
+    { ...size },
   );
 }

@@ -96,7 +96,9 @@ colors: {
 <div style={{ background: "#9C5BFF" }}>
 ```
 
-Fonts (Inter + Instrument Serif) load via `next/font/google` in `app/layout.tsx`.
+Fonts (Inter + Instrument Serif + Jost) load via `next/font/google` in `app/layout.tsx`. Use them via the Tailwind utilities: `font-sans` for Inter (default body), `font-serif` for Instrument Serif (italic gradient accents only), `font-jost` for the brand wordmark + tagline (never for body copy).
+
+The `Logo` component in `web/src/components/Logo.tsx` is the only place that renders the "kehdo" wordmark. **Don't render `kehdo` as plain text anywhere.** Three lockup variants are available: `mark` / `wordmark` / `lockup`. See [`/design/assets/logo/README.md`](../design/assets/logo/README.md) for the rules.
 
 ---
 

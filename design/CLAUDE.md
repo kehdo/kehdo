@@ -71,10 +71,22 @@ These values are final. Any change here triggers regeneration in all platforms.
 
 ## 🔤 Typography
 
-**Primary:** Inter (400–900)
-**Accent:** Instrument Serif Italic (gradient headlines only)
+**Primary:** Inter (400–900) — body text and UI
+**Accent:** Instrument Serif Italic (gradient headlines only — e.g. the word "Say" in "Just *Say* It.")
+**Brand:** Jost (400, 500, 600, 700) — **wordmark "kehdo" and tagline only.** Never use Jost for body text; the visual hierarchy depends on Jost being reserved for brand identity.
 
 Scale: `display1` 96px → `caption` 12px (see `typography.json`).
+
+## 🏷️ Logo + tagline (locked)
+
+- **Source asset:** [`/design/assets/logo/kehdo-mark.svg`](assets/logo/kehdo-mark.svg) — the only canonical logo file
+- **Wordmark:** "kehdo" rendered in Jost weight 600 — never recolored, never substituted
+- **Tagline (English):** "Just Say It" — short form. Full lockup form is "JUST · SAY · IT" in uppercase, letter-spaced wide, with bullet (`·`) separators
+- **Tagline (Hindi):** "कह दो" — used in the Footer alongside the English form (`कह दो — Just Say It.`)
+- **Lockup variants:** mark-only / mark+wordmark / mark+wordmark+tagline. See [`/design/assets/logo/README.md`](assets/logo/README.md) for when to use each
+- **Rule:** the Aurora gradient is anchored to the mark only. Never apply it to the wordmark — wordmark stays in moonlight on dark surfaces, bg on light. One brand-colored element at a time, mark or wordmark, never both.
+
+The Web project's `web/src/components/Logo.tsx` is the canonical implementation; Android's `:core:ui` will render the same shape natively in Compose during Phase 3.
 
 ---
 
@@ -105,6 +117,8 @@ All user-facing strings live in `copy/<lang>.json`. Built into platform-native i
   }
 }
 ```
+
+**Tagline:** the English string "Just Say It" is the locked product tagline (replaces the older "Reply with quiet confidence" hero line in brand contexts). Use it consistently in Footers, hero CTAs, app splash screens, and OG images. The longer "Reply with quiet confidence." remains a valid hero headline on the landing page; it's a marketing line, not the tagline.
 
 **Rules:**
 - Keys dot-namespaced: `<screen>.<element>.<variant>`
