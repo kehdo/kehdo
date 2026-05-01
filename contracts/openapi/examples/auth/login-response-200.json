@@ -1,0 +1,12 @@
+{
+  "accessToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwMThmMjNhYi0xMjM0LTcwMDAtODAwMC0wMDAwMDAwMDAwMDAiLCJpc3MiOiJodHRwczovL2FwaS5rZWhkby5hcHAiLCJpYXQiOjE3MzAyOTQwMDAsImV4cCI6MTczMDI5NDMwMCwic2lkIjoiMDE4ZjIzYWItYWFhYS03MDAwLWJiYmItMDAwMDAwMDAwMDAwIn0.signature",
+  "refreshToken": "rt_8f3a9c2e7b6d4f1a90b73c5e2d18f0a4b6c9d2e1f5a8b3c0d7e9f1a2b4c6d8e",
+  "expiresIn": 300,
+  "user": {
+    "id": "018f23ab-1234-7000-8000-000000000000",
+    "email": "alex@example.com",
+    "displayName": "Alex",
+    "plan": "STARTER",
+    "createdAt": "2026-05-01T04:30:00Z"
+  }
+}
