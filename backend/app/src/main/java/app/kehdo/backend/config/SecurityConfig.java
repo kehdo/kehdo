@@ -1,5 +1,7 @@
 package app.kehdo.backend.config;
 
+import app.kehdo.backend.auth.jwt.JwtService;
+import app.kehdo.backend.auth.web.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -9,26 +11,30 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
  * Phase-2 security configuration.
  *
- * <p>Wires up the public surface of the API and BCrypt for password hashing.
- * Stateless: every request must carry credentials (or be a public route);
- * we never issue session cookies. JWT bearer-token validation lands in
- * {@code feat/be/auth-endpoints} once the auth domain is in place.</p>
+ * <p>Stateless JWT-bearer authentication: no sessions, no CSRF cookie. The
+ * {@link JwtAuthenticationFilter} runs ahead of
+ * {@link UsernamePasswordAuthenticationFilter}, validates the
+ * {@code Authorization: Bearer <jwt>} header (if present), and pushes the
+ * principal into the security context. Endpoints listed in
+ * {@code permitAll()} skip this gate; {@code anyRequest().authenticated()}
+ * forces it on everything else.</p>
  *
  * <ul>
- *   <li>{@code GET /health} — public liveness</li>
- *   <li>{@code /actuator/health}, {@code /actuator/info},
- *       {@code /actuator/metrics}, {@code /actuator/prometheus} — public ops</li>
- *   <li>{@code /auth/**} — public; the endpoints themselves authenticate</li>
- *   <li>everything else — denied (will start serving once a JWT filter
- *       is added ahead of this chain)</li>
+ *   <li>{@code GET /health}, {@code /actuator/{health,info,metrics,prometheus}}
+ *       — public probes</li>
+ *   <li>{@code POST /auth/signup}, {@code /auth/login}, {@code /auth/refresh}
+ *       — public; the endpoints themselves authenticate the user</li>
+ *   <li>{@code POST /auth/logout} — REQUIRES auth (uses access-token claims
+ *       to identify which session to revoke)</li>
+ *   <li>everything else — authenticated</li>
  * </ul>
  *
- * <p>Note: paths are relative to {@code server.servlet.context-path: /v1}, so
- * "{@code /health}" matches {@code /v1/health} on the wire.</p>
+ * <p>Paths are relative to {@code server.servlet.context-path: /v1}.</p>
  */
 @Configuration
 @EnableWebSecurity
@@ -43,7 +49,12 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtService jwtService) {
+        return new JwtAuthenticationFilter(jwtService);
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> {})
@@ -59,8 +70,14 @@ public class SecurityConfig {
                                 "/actuator/metrics",
                                 "/actuator/prometheus")
                         .permitAll()
-                        .requestMatchers("/auth/**").permitAll()
-                        .anyRequest().authenticated());
+                        .requestMatchers(HttpMethod.POST,
+                                "/auth/signup",
+                                "/auth/login",
+                                "/auth/refresh").permitAll()
+                        // /auth/logout is intentionally NOT public — it identifies
+                        // the session to revoke from the access-token claims.
+                        .anyRequest().authenticated())
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 }

@@ -9,6 +9,11 @@ dependencies {
     // BCrypt PasswordEncoder + crypto utilities; the full security starter
     // (filter chain, etc.) lives in :app and isn't needed here.
     implementation("org.springframework.security:spring-security-crypto:6.2.1")
+    // Authentication primitives + SecurityContextHolder for the
+    // JwtAuthenticationFilter. spring-security-web brings the OncePerRequestFilter
+    // base class.
+    implementation("org.springframework.security:spring-security-core:6.2.1")
+    implementation("org.springframework.security:spring-security-web:6.2.1")
 
     // RS256 JWT issuance + validation
     implementation("io.jsonwebtoken:jjwt-api:0.12.5")
