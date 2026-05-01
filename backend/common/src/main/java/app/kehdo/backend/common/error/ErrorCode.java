@@ -20,6 +20,7 @@ public final class ErrorCode {
 
     // Auth
     public static final String EMAIL_ALREADY_REGISTERED = "EMAIL_ALREADY_REGISTERED";
+    public static final String EMAIL_DOMAIN_NOT_ALLOWED = "EMAIL_DOMAIN_NOT_ALLOWED";
     public static final String INVALID_CREDENTIALS = "INVALID_CREDENTIALS";
     public static final String REFRESH_TOKEN_INVALID = "REFRESH_TOKEN_INVALID";
 

@@ -1,0 +1,210 @@
+# Disposable / throwaway email domain blocklist
+# Source: curated subset of github.com/disposable-email-domains/disposable-email-domains
+# Format: one domain per line, lowercase, no leading @ or trailing slash.
+# Comments (#) and blank lines are ignored.
+#
+# Maintenance: roughly quarterly, sync the high-traffic disposable services
+# from the upstream repo. New services pop up; the list won't be exhaustive.
+# Block by-domain only — we don't try to detect aliasing (foo+bar@gmail.com).
+
+# Mailinator family
+mailinator.com
+mailinator.net
+mailinator.org
+mailinator2.com
+mailinator.us
+notmailinator.com
+binkmail.com
+bobmail.info
+chammy.info
+devnullmail.com
+letthemeatspam.com
+mailinater.com
+mailinator-test.com
+mailinator.gq
+mailinator.info
+mailinator.net.ng
+streetwisemail.com
+suremail.info
+zippymail.info
+
+# 10minutemail family
+10minutemail.com
+10minutemail.net
+10minutemail.org
+10minutemail.us
+10minutemail.de
+10minemail.com
+10minutesmail.com
+my10minutemail.com
+fakemail.in.net
+
+# Guerrilla Mail family
+guerrillamail.com
+guerrillamail.net
+guerrillamail.org
+guerrillamail.biz
+guerrillamail.de
+guerrillamailblock.com
+sharklasers.com
+spam4.me
+grr.la
+pokemail.net
+guerrilla.de
+
+# Temp-mail / TempMail / temporary services
+tempmail.com
+tempmail.net
+tempmail.org
+temp-mail.org
+temp-mail.io
+temp-mail.com
+tempemail.com
+tempinbox.com
+tempr.email
+tempmailo.com
+tempmaildemand.com
+mytemp.email
+
+# Yopmail family
+yopmail.com
+yopmail.fr
+yopmail.net
+yopmail.gq
+yopmail.us
+cool.fr.nf
+courriel.fr.nf
+moncourrier.fr.nf
+monemail.fr.nf
+monmail.fr.nf
+
+# Maildrop / mailcatch
+maildrop.cc
+mailcatch.com
+
+# Throwaway mail
+throwawaymail.com
+throwam.com
+throwaway.email
+trashmail.com
+trashmail.net
+trashmail.de
+trashmail.io
+trashymail.com
+0wnd.net
+0wnd.org
+
+# Disposable mail
+disposablemail.com
+dispostable.com
+disposable.email
+disposableemailaddresses.com
+disposableinbox.com
+emailtemporanea.net
+
+# Mintemail / discard family
+discard.email
+discardmail.com
+discardmail.de
+emailondeck.com
+emailondeck.net
+
+# Misc popular disposable
+fakeinbox.com
+fakemailgenerator.com
+freecode.in
+emailtmp.com
+inboxbear.com
+spambox.us
+spambox.org
+spamgourmet.com
+spamcorptastic.com
+spamfree24.org
+mt2014.com
+mt2015.com
+mvrht.com
+mailnesia.com
+moakt.cc
+incognitomail.com
+incognitomail.org
+incognitomail.net
+nada.email
+nada.ltd
+mohmal.com
+mailtothis.com
+mailfa.tk
+nepwk.com
+emltmp.com
+mfsa.ru
+emaillox.com
+emailgo.de
+no-spam.ws
+spamspot.com
+spamhole.com
+trashinbox.com
+
+# Quickly-set-up domains commonly used by disposable services
+1secmail.com
+1secmail.net
+1secmail.org
+1secmail.xyz
+1zhuan.com
+27email.com
+33mail.com
+emkei.cz
+spamavert.com
+mailimate.com
+mailpoof.com
+boximail.com
+boximail.us
+mail-temp.com
+
+# Often-used by spam / scam ops
+asdf.pl
+aaa.com
+fakemailing.com
+mail.bodhi.lawlita.com
+sendsinmail.com
+voicebr.com
+0815.ru
+0815.su
+0clickemail.com
+0n0ff.net
+0wnsyou.com
+1clickemail.com
+20mail.in
+20mail.it
+20minutemail.com
+30minutemail.com
+30wave.com
+4warding.com
+60minutemail.com
+
+# Notable additions (popular in 2024-2026 disposable abuse)
+mailto.plus
+fexpost.com
+fexbox.org
+mailbox.in.ua
+inboxtolet.com
+mailmoth.com
+proxymail.eu
+ipsur.com
+msgwire.com
+ezztt.com
+buyusedlibrarybooks.org
+cuvox.de
+arrr.club
+emailkurier.de
+mailfast.pro
+randomail.net
+rcpt.at
+sectorlol.com
+emailisvalid.com
+mt2009.com
+oranek.com
+trash-mail.com
+gmal.com
+gmali.com
+gmial.com
+googlemall.com
+gmial.com

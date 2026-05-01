@@ -1,6 +1,7 @@
 package app.kehdo.backend.auth.service;
 
 import app.kehdo.backend.auth.error.EmailAlreadyRegisteredException;
+import app.kehdo.backend.auth.error.EmailDomainNotAllowedException;
 import app.kehdo.backend.auth.error.InvalidCredentialsException;
 import app.kehdo.backend.auth.error.RefreshTokenInvalidException;
 import app.kehdo.backend.auth.jwt.JwtKeys;
@@ -9,6 +10,7 @@ import app.kehdo.backend.auth.jwt.JwtService;
 import app.kehdo.backend.auth.session.Session;
 import app.kehdo.backend.auth.session.SessionRepository;
 import app.kehdo.backend.auth.token.RefreshTokens;
+import app.kehdo.backend.auth.validation.DisposableEmailValidator;
 import app.kehdo.backend.user.User;
 import app.kehdo.backend.user.UserPlan;
 import app.kehdo.backend.user.UserRepository;
@@ -44,6 +46,7 @@ class AuthServiceTest {
     private PasswordEncoder passwordEncoder;
     private JwtService jwtService;
     private JwtProperties jwtProperties;
+    private DisposableEmailValidator disposableEmailValidator;
     private AuthService authService;
 
     @BeforeEach
@@ -55,12 +58,19 @@ class AuthServiceTest {
         JwtKeys keys = JwtKeys.load(jwtProperties);
         jwtService = new JwtService(jwtProperties, keys, FIXED_CLOCK);
 
+        // Real validator backed by the resource file; covers the resource
+        // loading path too. Tests that rely on specific blocked domains use
+        // entries known to be in the shipped blocklist.
+        disposableEmailValidator = new DisposableEmailValidator();
+        disposableEmailValidator.load();
+
         authService = new AuthService(
                 userRepository,
                 sessionRepository,
                 passwordEncoder,
                 jwtService,
                 jwtProperties,
+                disposableEmailValidator,
                 FIXED_CLOCK);
     }
 
@@ -114,6 +124,33 @@ class AuthServiceTest {
 
         verify(userRepository, never()).save(any());
         verify(sessionRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("signup with disposable email domain throws EmailDomainNotAllowedException — no DB hit")
+    void signup_disposable_email_blocked() {
+        // Mailinator is on the blocklist; the rejection should happen before
+        // any userRepository call.
+        assertThatThrownBy(() -> authService.signup(new AuthService.SignupCommand(
+                "burner@mailinator.com",
+                "correct-horse-battery-staple",
+                "Anon",
+                null, null)))
+                .isInstanceOf(EmailDomainNotAllowedException.class);
+
+        verify(userRepository, never()).existsActiveByEmail(any());
+        verify(userRepository, never()).save(any());
+        verify(sessionRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("signup with disposable email is case-insensitive on the domain")
+    void signup_disposable_email_case_insensitive() {
+        assertThatThrownBy(() -> authService.signup(new AuthService.SignupCommand(
+                "BURNER@MAILINATOR.COM",
+                "correct-horse-battery-staple",
+                null, null, null)))
+                .isInstanceOf(EmailDomainNotAllowedException.class);
     }
 
     // -------------------- login --------------------

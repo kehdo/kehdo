@@ -278,9 +278,16 @@ If Claude is about to do any of these, **STOP and ask the user first:**
 
 ## 📦 Current project status
 
-- **Phase:** Scaffolding complete, implementation beginning
-- **Active workstream:** Landing page (web)
-- **Next up:** Backend auth → Android auth → AI pipeline → Android full flow → Android launch → iOS
+- **Phase:** Phase 2 (backend auth) shipped to v0.3.0; Phase 3 (Android scaffold + auth) in progress
+- **Tagged releases:**
+  - `v0.1.0` — landing page live at kehdo.app
+  - `v0.2.0` — landing polish (Sheets waitlist, legal pages, Vercel Analytics, OG image, Vertex AI pivot per ADR 0006)
+  - `v0.3.0` — backend auth (BCrypt, RS256 JWT, refresh rotation, signup/login/refresh/logout, disposable-email blocking)
+- **Live deployments:** kehdo.app + www.kehdo.app + staging.kehdo.app on Vercel. Backend runs locally only (AWS deploy deferred to keep within "no investment yet")
+- **Active workstream:** Phase 3 — Android scaffold + auth (calling our backend `/v1/auth/*` directly; no Firebase Auth)
+- **Auth strategy:** Backend-driven (NOT Firebase). Android stores access + refresh tokens in EncryptedSharedPreferences and refreshes on 401
+- **Next up:** Phase 4 (AI pipeline per ADR 0006) → Android beta → Android launch → iOS
+- **Deferred / backlog:** see [`docs/BACKLOG.md`](docs/BACKLOG.md) for tracked items (password reset, email confirmation, social login, MFA, AWS deploy, etc.)
 - **Brand:** Aurora palette LOCKED
 - **Product name:** kehdo.app (do NOT use "Flawlessly")
 - **AI stack (Phase 1):** Vertex AI Gemini 2.0 Flash (primary) + OpenAI gpt-4o-mini (failover) + Google Cloud Vision (OCR). The landing page does NOT name the LLM — vendor flexibility is intentional.
