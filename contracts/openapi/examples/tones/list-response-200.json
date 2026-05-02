@@ -1,0 +1,20 @@
+[
+  { "code": "CASUAL",       "name": "Casual",       "emoji": "💬", "description": "Relaxed, conversational",         "isPro": false },
+  { "code": "WARM",         "name": "Warm",         "emoji": "🤗", "description": "Kind, considerate",               "isPro": false },
+  { "code": "DIRECT",       "name": "Direct",       "emoji": "🎯", "description": "Concise and to the point",        "isPro": false },
+  { "code": "THOUGHTFUL",   "name": "Thoughtful",   "emoji": "🧠", "description": "Reflective and considered",       "isPro": false },
+  { "code": "GRATEFUL",     "name": "Grateful",     "emoji": "🙏", "description": "Sincere thanks",                  "isPro": false },
+  { "code": "APOLOGETIC",   "name": "Apologetic",   "emoji": "😔", "description": "Genuine, no over-explaining",     "isPro": false },
+  { "code": "CONFIDENT",    "name": "Confident",    "emoji": "😎", "description": "Assured without arrogance",       "isPro": false },
+  { "code": "BRIEF",        "name": "Brief",        "emoji": "✂️", "description": "Minimal — \"k thx\" energy",      "isPro": false },
+  { "code": "FLIRTY",       "name": "Flirty",       "emoji": "😏", "description": "Playful interest",                "isPro": true  },
+  { "code": "WITTY",        "name": "Witty",        "emoji": "🪄", "description": "Clever and self-aware",           "isPro": true  },
+  { "code": "PLAYFUL",      "name": "Playful",      "emoji": "🎈", "description": "Light-hearted, fun",              "isPro": true  },
+  { "code": "SARCASTIC",    "name": "Sarcastic",    "emoji": "🙃", "description": "Dry, knowing humor",              "isPro": true  },
+  { "code": "FORMAL",       "name": "Formal",       "emoji": "🎩", "description": "Professional, polished",          "isPro": true  },
+  { "code": "POETIC",       "name": "Poetic",       "emoji": "✨", "description": "Expressive, lyrical",             "isPro": true  },
+  { "code": "EMPATHETIC",   "name": "Empathetic",   "emoji": "💗", "description": "Deeply listening",                "isPro": true  },
+  { "code": "ENTHUSIASTIC", "name": "Enthusiastic", "emoji": "🔥", "description": "High-energy, hype",               "isPro": true  },
+  { "code": "DIPLOMATIC",   "name": "Diplomatic",   "emoji": "🕊️", "description": "Tactful, conflict-defusing",      "isPro": true  },
+  { "code": "CURIOUS",      "name": "Curious",      "emoji": "🧐", "description": "Inquisitive, opens conversation", "isPro": true  }
+]
