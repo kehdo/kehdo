@@ -8,6 +8,7 @@ import app.kehdo.core.network.api.dto.SignInRequestDto
 import app.kehdo.core.network.api.dto.SignUpRequestDto
 import app.kehdo.core.network.auth.AccessTokenHolder
 import app.kehdo.data.auth.mapper.ErrorMapper
+import app.kehdo.data.auth.mapper.toDomain
 import app.kehdo.data.auth.mapper.toUser
 import app.kehdo.domain.auth.AuthRepository
 import app.kehdo.domain.auth.User
@@ -64,6 +65,26 @@ class RealAuthRepository @Inject constructor(
             onFailure = { Outcome.Failure(errorMapper.toKehdoError(it)) }
         )
     }
+
+    override suspend fun refreshCurrentUser(): Outcome<User> = runCatching {
+        authApi.getCurrentUser()
+    }.fold(
+        onSuccess = { dto ->
+            val user = dto.toDomain()
+            _currentUser.value = user
+            Outcome.success(user)
+        },
+        onFailure = {
+            val error = errorMapper.toKehdoError(it)
+            // 401 from /me means the user no longer exists (soft-deleted) or
+            // the refresh chain finally gave up — either way, drop local
+            // state so the root nav graph bounces back to auth.
+            if (error is app.kehdo.core.common.KehdoError.Unauthorized) {
+                clearSession()
+            }
+            Outcome.Failure(error)
+        }
+    )
 
     override suspend fun tryRestoreSession(): Boolean {
         val refresh = tokenStore.getRefreshToken() ?: return false

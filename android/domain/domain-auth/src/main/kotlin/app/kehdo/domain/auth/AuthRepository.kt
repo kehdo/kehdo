@@ -30,4 +30,15 @@ interface AuthRepository {
      * session was restored, false when the user must sign in again.
      */
     suspend fun tryRestoreSession(): Boolean
+
+    /**
+     * Re-fetches the current user from the backend ({@code GET /me}) and
+     * updates the [currentUser] flow with the fresh projection. Used by
+     * screens that need post-login data (display name, plan changes, etc.)
+     * to be current rather than whatever the AuthResponse said at sign-in.
+     *
+     * On `Unauthorized` the repository clears the session locally so the
+     * UI bounces back to auth instead of showing stale identity.
+     */
+    suspend fun refreshCurrentUser(): Outcome<User>
 }
