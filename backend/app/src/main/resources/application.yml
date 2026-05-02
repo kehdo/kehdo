@@ -96,7 +96,7 @@ kehdo:
     # dev / CI never touches a cloud API. Flip individually as adapters
     # ship: ocr.provider=gcp (PR 6), llm.provider=gcp (PR 7) → openai
     # (PR 8 failover composes both), speaker.provider=gcp (PR 9),
-    # moderation.provider=openai (PR 11).
+    # moderation.provider=openai (PR 13).
     ocr:
       provider: ${KEHDO_AI_OCR_PROVIDER:stub}        # stub | gcp
     llm:
@@ -114,6 +114,7 @@ kehdo:
     openai:
       api-key: ${OPENAI_API_KEY:}
       model: ${OPENAI_MODEL:gpt-4o-mini}
+      moderation-model: ${OPENAI_MODERATION_MODEL:omni-moderation-latest}
       role: failover
     google-vision:
       credentials-path: ${GOOGLE_APPLICATION_CREDENTIALS:}
@@ -152,6 +153,7 @@ resilience4j:
       llm-vertex: { max-attempts: 2, wait-duration: 250ms }
       llm-openai: { max-attempts: 2, wait-duration: 250ms }
       ocr-vision: { max-attempts: 2, wait-duration: 250ms }
+      moderation: { max-attempts: 2, wait-duration: 250ms }
 
 logging:
   level:

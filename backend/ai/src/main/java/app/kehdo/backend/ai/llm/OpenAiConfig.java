@@ -10,14 +10,17 @@ import java.time.Duration;
 
 /**
  * Provisions the OpenAI {@link RestClient} + {@link OpenAiClient} when
- * the LLM provider includes OpenAI ({@code openai}-only or
- * {@code failover}). Skipped entirely on {@code stub} or {@code gcp}-only
- * — in those modes the bean isn't created, so missing
- * {@code OPENAI_API_KEY} doesn't fail startup.
+ * <em>any</em> consumer needs OpenAI: chat completions for
+ * {@code llm.provider} = {@code openai} or {@code failover}, OR
+ * {@code moderation.provider=openai}. Skipped entirely when nothing needs
+ * the bean — in that case missing {@code OPENAI_API_KEY} doesn't fail
+ * startup.
  */
 @Configuration
 @ConditionalOnExpression(
-        "'${kehdo.ai.llm.provider:stub}' == 'openai' || '${kehdo.ai.llm.provider:stub}' == 'failover'")
+        "'${kehdo.ai.llm.provider:stub}' == 'openai' "
+                + "|| '${kehdo.ai.llm.provider:stub}' == 'failover' "
+                + "|| '${kehdo.ai.moderation.provider:stub}' == 'openai'")
 public class OpenAiConfig {
 
     private static final String DEFAULT_BASE_URL = "https://api.openai.com";
