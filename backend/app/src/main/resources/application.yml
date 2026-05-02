@@ -82,8 +82,21 @@ kehdo:
   ai:
     # Hard cap on prompt tokens per backend/CLAUDE.md AI rule 3.
     token-budget: 3000
+    # Per-concern provider switch. Default everywhere is "stub" so local
+    # dev / CI never touches a cloud API. Flip individually as adapters
+    # ship: ocr.provider=gcp (PR 6), llm.provider=gcp (PR 7) → openai
+    # (PR 8 failover composes both), speaker.provider=gcp (PR 9),
+    # moderation.provider=openai (PR 11).
+    ocr:
+      provider: ${KEHDO_AI_OCR_PROVIDER:stub}        # stub | gcp
+    llm:
+      provider: ${KEHDO_AI_LLM_PROVIDER:stub}        # stub | gcp | openai
+    speaker:
+      provider: ${KEHDO_AI_SPEAKER_PROVIDER:stub}    # stub | gcp
+    moderation:
+      provider: ${KEHDO_AI_MODERATION_PROVIDER:stub} # stub | openai
     vertex:
-      project-id: ${VERTEX_PROJECT_ID:}
+      project-id: ${VERTEX_PROJECT_ID:kehdo-staging}
       location: ${VERTEX_LOCATION:asia-south1}
       model: ${VERTEX_MODEL:gemini-2.0-flash}
       credentials-path: ${GOOGLE_APPLICATION_CREDENTIALS:}

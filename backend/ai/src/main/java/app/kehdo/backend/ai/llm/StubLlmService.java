@@ -1,22 +1,21 @@
 package app.kehdo.backend.ai.llm;
 
-import org.springframework.context.annotation.Profile;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 /**
- * Phase 4 PR 3 placeholder. Returns generic ranked replies regardless of
- * input so PR 4 can stand up the {@code POST /conversations/{id}/generate}
- * controller end-to-end before real LLM credentials are in hand.
+ * Placeholder LLM. Returns generic ranked replies regardless of input so
+ * the {@code POST /conversations/{id}/generate} controller can run
+ * end-to-end before real credentials.
  *
- * <p>Active when the {@code stub-llm} profile is on (default in
- * {@code application-local.yml} / dev). Real adapters (Phase 4 PR 7 Vertex
- * AI, PR 8 OpenAI failover) will register a higher-precedence
- * {@link LlmService} bean and disable this one.</p>
+ * <p>Active when {@code kehdo.ai.llm.provider=stub} (the default; flip to
+ * {@code gcp} once Phase 4 PR 7 lands the Vertex AI adapter, or
+ * {@code openai} for PR 8's failover-only mode).</p>
  */
 @Service
-@Profile({"stub-llm", "test", "default"})
+@ConditionalOnProperty(name = "kehdo.ai.llm.provider", havingValue = "stub", matchIfMissing = true)
 public class StubLlmService implements LlmService {
 
     /** Identifier persisted on {@code replies.model_used}. Used to filter stub-generated rows out of analytics. */

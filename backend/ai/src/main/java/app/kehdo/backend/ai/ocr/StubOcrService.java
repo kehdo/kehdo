@@ -1,17 +1,19 @@
 package app.kehdo.backend.ai.ocr;
 
-import org.springframework.context.annotation.Profile;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 /**
- * Phase 4 PR 3 placeholder. Returns a fixed two-line conversation so the
- * generate endpoint has something coherent to feed downstream stages
- * before {@code CloudVisionOcrService} (PR 6) lands.
+ * Placeholder OCR. Returns a fixed two-line conversation so the generate
+ * endpoint has something coherent to feed downstream stages.
+ *
+ * <p>Active when {@code kehdo.ai.ocr.provider=stub} (the default).
+ * Set {@code kehdo.ai.ocr.provider=gcp} to use {@link CloudVisionOcrService}.</p>
  */
 @Service
-@Profile({"stub-llm", "test", "default"})
+@ConditionalOnProperty(name = "kehdo.ai.ocr.provider", havingValue = "stub", matchIfMissing = true)
 public class StubOcrService implements OcrService {
 
     @Override
