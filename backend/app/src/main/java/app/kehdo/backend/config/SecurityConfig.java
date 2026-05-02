@@ -74,6 +74,9 @@ public class SecurityConfig {
                                 "/auth/signup",
                                 "/auth/login",
                                 "/auth/refresh").permitAll()
+                        // GET /tones is public per the contract — clients render
+                        // the tone picker on pre-login marketing surfaces too.
+                        .requestMatchers(HttpMethod.GET, "/tones").permitAll()
                         // /auth/logout is intentionally NOT public — it identifies
                         // the session to revoke from the access-token claims.
                         .anyRequest().authenticated())

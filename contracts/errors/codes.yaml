@@ -54,6 +54,10 @@ codes:
     httpStatus: 402
     i18nKey: errors.DAILY_QUOTA_EXCEEDED
     description: Free tier daily limit reached
+  - code: TONE_REQUIRES_PRO
+    httpStatus: 402
+    i18nKey: errors.TONE_REQUIRES_PRO
+    description: Selected tone is only available on Pro / Unlimited plans
   - code: RATE_LIMIT_EXCEEDED
     httpStatus: 429
     i18nKey: errors.RATE_LIMIT_EXCEEDED
@@ -63,10 +67,18 @@ codes:
   - code: UPLOAD_FAILED
     httpStatus: 400
     i18nKey: errors.UPLOAD_FAILED
+  - code: IMAGE_TOO_LARGE
+    httpStatus: 413
+    i18nKey: errors.IMAGE_TOO_LARGE
+    description: Screenshot exceeds the 10 MB maximum
   - code: SCREENSHOT_INVALID
     httpStatus: 400
     i18nKey: errors.SCREENSHOT_INVALID
     description: Image is corrupt, blank, or contains no chat
+  - code: CONVERSATION_NOT_READY
+    httpStatus: 409
+    i18nKey: errors.CONVERSATION_NOT_READY
+    description: Generate/refine called before the screenshot has been uploaded
   - code: OCR_FAILED
     httpStatus: 422
     i18nKey: errors.OCR_FAILED

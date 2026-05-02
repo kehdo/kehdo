@@ -1,0 +1,32 @@
+{
+  "conversationId": "01939e6c-0001-7a4f-8000-000000000001",
+  "tone": "WARM",
+  "generatedAt": "2026-05-02T18:31:12Z",
+  "modelUsed": "vertex-ai/gemini-2.0-flash",
+  "replies": [
+    {
+      "id": "01939e6c-0002-7a4f-8000-000000000001",
+      "rank": 1,
+      "text": "Totally get it — let's do somewhere chill instead. How about that little cafe on Brigade Road?",
+      "toneCode": "WARM"
+    },
+    {
+      "id": "01939e6c-0002-7a4f-8000-000000000002",
+      "rank": 2,
+      "text": "Of course, long week is rough. Want to swap to a quieter spot or just postpone to Sunday?",
+      "toneCode": "WARM"
+    },
+    {
+      "id": "01939e6c-0002-7a4f-8000-000000000003",
+      "rank": 3,
+      "text": "Say no more — I know a quiet place nearby. Same time?",
+      "toneCode": "WARM"
+    },
+    {
+      "id": "01939e6c-0002-7a4f-8000-000000000004",
+      "rank": 4,
+      "text": "Got it. Tell me what mood you're in and I'll pick somewhere good.",
+      "toneCode": "WARM"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "id": "01939e6c-0001-7a4f-8000-000000000001",
+  "status": "READY",
+  "createdAt": "2026-05-02T18:30:00Z",
+  "messages": [
+    {
+      "speaker": "THEM",
+      "text": "Are we still on for dinner Friday?",
+      "confidence": 0.97
+    },
+    {
+      "speaker": "ME",
+      "text": "Yeah! 7pm at Bombay Brasserie?",
+      "confidence": 0.99
+    },
+    {
+      "speaker": "THEM",
+      "text": "Hmm I was thinking somewhere quieter — long week",
+      "confidence": 0.94
+    }
+  ]
+}
