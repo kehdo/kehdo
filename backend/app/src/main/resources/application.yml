@@ -80,6 +80,8 @@ kehdo:
   # AI providers — Phase 1 stack per ADR 0006:
   # Vertex AI (primary) + OpenAI (failover) + Google Cloud Vision (OCR)
   ai:
+    # Hard cap on prompt tokens per backend/CLAUDE.md AI rule 3.
+    token-budget: 3000
     vertex:
       project-id: ${VERTEX_PROJECT_ID:}
       location: ${VERTEX_LOCATION:asia-south1}
@@ -92,6 +94,41 @@ kehdo:
       role: failover
     google-vision:
       credentials-path: ${GOOGLE_APPLICATION_CREDENTIALS:}
+
+# Resilience4j — gate around every external AI call per backend/CLAUDE.md
+# AI rule 4. Phase 4 PR 7+ wires Vertex AI / OpenAI / Cloud Vision behind
+# these named instances; the stub adapters in PR 3 don't trip them.
+resilience4j:
+  circuitbreaker:
+    instances:
+      llm-vertex:
+        sliding-window-size: 20
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 3
+      llm-openai:
+        sliding-window-size: 20
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+      ocr-vision:
+        sliding-window-size: 50
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+      moderation:
+        sliding-window-size: 50
+        failure-rate-threshold: 70   # moderation is best-effort; tolerate more drift
+        wait-duration-in-open-state: 60s
+  timelimiter:
+    instances:
+      llm-vertex: { timeout-duration: 10s }
+      llm-openai: { timeout-duration: 10s }
+      ocr-vision: { timeout-duration: 8s }
+      moderation: { timeout-duration: 5s }
+  retry:
+    instances:
+      llm-vertex: { max-attempts: 2, wait-duration: 250ms }
+      llm-openai: { max-attempts: 2, wait-duration: 250ms }
+      ocr-vision: { max-attempts: 2, wait-duration: 250ms }
 
 logging:
   level:
