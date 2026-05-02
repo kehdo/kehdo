@@ -159,6 +159,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
   /me/usage:
     get:
@@ -172,6 +174,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UsageResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
   # ==================== CONVERSATIONS ====================
   /conversations:
@@ -179,6 +183,12 @@ paths:
       operationId: createConversation
       tags: [conversation]
       summary: Reserve a conversation and get a presigned upload URL
+      description: |
+        Creates a new conversation in `PENDING_UPLOAD` state and returns a
+        short-lived presigned PUT URL. The client uploads the screenshot
+        directly to object storage with `Content-Type: image/*`, then calls
+        `POST /conversations/{id}/generate` to trigger OCR + reply
+        generation.
       responses:
         '201':
           description: Conversation created
@@ -186,6 +196,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreateConversationResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '413':
+          $ref: '#/components/responses/ImageTooLarge'
 
     get:
       operationId: listConversations
@@ -205,6 +219,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ConversationPage'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
   /conversations/{id}:
     parameters:
@@ -220,6 +236,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Conversation'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
     delete:
       operationId: deleteConversation
       tags: [conversation]
@@ -227,6 +247,10 @@ paths:
       responses:
         '204':
           description: Deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /conversations/{id}/generate:
     parameters:
@@ -235,6 +259,14 @@ paths:
       operationId: generateReplies
       tags: [reply]
       summary: Generate ranked reply suggestions for a conversation
+      description: |
+        Triggers the OCR + speaker attribution + LLM pipeline. The first call
+        for a conversation transitions it from `PENDING_UPLOAD` → `PROCESSING`
+        → `READY` (or `FAILED`). Subsequent calls reuse cached OCR output
+        and re-run only the LLM with the new tone.
+
+        Free-tier (`STARTER`) users may only request tones with `isPro=false`
+        on `/tones`; Pro tones return `402 TONE_REQUIRES_PRO`.
       requestBody:
         required: true
         content:
@@ -248,8 +280,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GenerateResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '402':
           $ref: '#/components/responses/QuotaExceeded'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/ConversationNotReady'
+        '422':
+          $ref: '#/components/responses/UnprocessableContent'
         '429':
           $ref: '#/components/responses/RateLimited'
 
@@ -263,6 +303,10 @@ paths:
       operationId: refineReply
       tags: [reply]
       summary: Refine a generated reply with free-text instructions
+      description: |
+        Applies short user instructions (e.g. "shorter", "less formal",
+        "add a question") to an already-generated reply. Counts against the
+        same daily quota as `generateReplies`.
       requestBody:
         required: true
         content:
@@ -271,7 +315,7 @@ paths:
               type: object
               required: [instructions]
               properties:
-                instructions: { type: string, maxLength: 200 }
+                instructions: { type: string, minLength: 1, maxLength: 200 }
       responses:
         '200':
           description: Refined reply
@@ -279,6 +323,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Reply'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          $ref: '#/components/responses/QuotaExceeded'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/RateLimited'
 
   # ==================== TONES ====================
   /tones:
@@ -287,6 +343,10 @@ paths:
       tags: [tone]
       security: []
       summary: List all available reply tones
+      description: |
+        Returns the full catalog of 18 tones. Items with `isPro=true` are
+        only callable by users on `PRO` or `UNLIMITED` plans; the free
+        `STARTER` tier currently has access to 8 tones.
       responses:
         '200':
           description: Tones
@@ -440,19 +500,31 @@ components:
 
     ToneCode:
       type: string
+      description: |
+        UPPER_SNAKE_CASE tone identifier. There are 18 in total; 8 are
+        available on the free `STARTER` tier. The split is exposed via
+        the `isPro` flag on `GET /tones`.
       enum:
+        # Free tier (8) ---------------------------------------------------
         - CASUAL
+        - WARM
+        - DIRECT
+        - THOUGHTFUL
+        - GRATEFUL
+        - APOLOGETIC
+        - CONFIDENT
+        - BRIEF
+        # Pro tier (10) ---------------------------------------------------
         - FLIRTY
         - WITTY
-        - FORMAL
-        - SARCASTIC
-        - POETIC
-        - GRATEFUL
-        - THOUGHTFUL
-        - DIRECT
-        - WARM
-        - CONFIDENT
         - PLAYFUL
+        - SARCASTIC
+        - FORMAL
+        - POETIC
+        - EMPATHETIC
+        - ENTHUSIASTIC
+        - DIPLOMATIC
+        - CURIOUS
 
     ErrorEnvelope:
       type: object
@@ -471,27 +543,59 @@ components:
 
   responses:
     BadRequest:
-      description: Validation error
+      description: Validation error (`BAD_REQUEST`)
       content:
         application/json:
           schema: { $ref: '#/components/schemas/ErrorEnvelope' }
     Unauthorized:
-      description: Missing or invalid credentials
+      description: Missing or invalid credentials (`UNAUTHORIZED`)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+    NotFound:
+      description: Resource does not exist (`NOT_FOUND`)
       content:
         application/json:
           schema: { $ref: '#/components/schemas/ErrorEnvelope' }
     Conflict:
-      description: Resource conflict (e.g., email already in use)
+      description: Resource conflict, e.g. email already in use (`CONFLICT`)
       content:
         application/json:
           schema: { $ref: '#/components/schemas/ErrorEnvelope' }
     QuotaExceeded:
-      description: Daily quota exceeded — upgrade required
+      description: |
+        Daily quota exceeded (`DAILY_QUOTA_EXCEEDED`) or the requested
+        tone requires a paid plan (`TONE_REQUIRES_PRO`). Both surface as
+        HTTP 402; clients should distinguish via the `code` field and
+        offer an upgrade CTA.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+    ConversationNotReady:
+      description: |
+        Generate or refine called before the screenshot has been uploaded
+        to the presigned URL, or while OCR is still in flight
+        (`CONVERSATION_NOT_READY`).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+    UnprocessableContent:
+      description: |
+        OCR or speaker attribution couldn't extract a usable conversation
+        (`SCREENSHOT_INVALID` / `OCR_FAILED` / `NO_MESSAGES_DETECTED`),
+        or moderation blocked the generated reply (`CONTENT_BLOCKED`).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+    ImageTooLarge:
+      description: |
+        Screenshot exceeded the maximum upload size (`IMAGE_TOO_LARGE`).
+        Current limit is 10 MB.
       content:
         application/json:
           schema: { $ref: '#/components/schemas/ErrorEnvelope' }
     RateLimited:
-      description: Rate limit hit
+      description: Rate limit hit (`RATE_LIMIT_EXCEEDED`)
       content:
         application/json:
           schema: { $ref: '#/components/schemas/ErrorEnvelope' }
