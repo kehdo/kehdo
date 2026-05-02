@@ -142,6 +142,7 @@ Released as `v0.3.0`. The following are LIVE behind `/v1/`:
 | `/auth/login` | POST | ✅ same-shaped error for wrong password and unknown email (no info leak) |
 | `/auth/refresh` | POST | ✅ rotates refresh token in place; same session id |
 | `/auth/logout` | POST | ✅ requires Bearer JWT; revokes session via the `sid` claim |
+| `/me` | GET | ✅ Phase 3.5 — returns the authenticated user's profile; 401 if the user has been soft-deleted since the access token was issued |
 | `/actuator/{health,info,metrics,prometheus}` | GET | ✅ public ops probes |
 
 Implementation map:
