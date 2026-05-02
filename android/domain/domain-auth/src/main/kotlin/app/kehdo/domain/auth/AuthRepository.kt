@@ -23,4 +23,11 @@ interface AuthRepository {
     suspend fun refreshToken(): Outcome<Unit>
 
     suspend fun signOut(): Outcome<Unit>
+
+    /**
+     * Cold-start hook: if a refresh token exists on disk, exchange it for a
+     * fresh access token and populate currentUser. Returns true when a
+     * session was restored, false when the user must sign in again.
+     */
+    suspend fun tryRestoreSession(): Boolean
 }

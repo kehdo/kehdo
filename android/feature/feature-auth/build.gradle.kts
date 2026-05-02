@@ -8,6 +8,4 @@ android {
 
 dependencies {
     implementation(project(":domain:auth"))
-    implementation(project(":domain:conversation"))
-    implementation(project(":domain:user"))
 }

@@ -20,6 +20,8 @@ android {
             isMinifyEnabled = false
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
+            manifestPlaceholders["BUILD_TYPE"] = "debug"
+            manifestPlaceholders["SENTRY_DSN"] = ""
         }
         release {
             isMinifyEnabled = true
@@ -29,6 +31,10 @@ android {
                 "proguard-rules.pro"
             )
             signingConfig = signingConfigs.getByName("debug")
+            manifestPlaceholders["BUILD_TYPE"] = "release"
+            // Sentry DSN is injected by CI (e.g. via `-PSENTRY_DSN=...` or env). Empty disables Sentry.
+            manifestPlaceholders["SENTRY_DSN"] =
+                (project.findProperty("SENTRY_DSN") as String?) ?: ""
         }
     }
 
@@ -52,6 +58,9 @@ dependencies {
     implementation(project(":core:datastore"))
     implementation(project(":core:analytics"))
 
+    // Domain modules — :app uses domain use-cases directly for the root nav decider
+    implementation(project(":domain:auth"))
+
     // Data modules — only the :app module wires data implementations
     implementation(project(":data:auth"))
     implementation(project(":data:conversation"))
@@ -70,14 +79,10 @@ dependencies {
     // AndroidX
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime)
+    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.activity.compose)
     implementation(libs.navigation.compose)
     implementation(libs.hilt.navigation.compose)
-
-    // Firebase
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.auth)
-    implementation(libs.firebase.analytics)
 
     // Sentry
     implementation(libs.sentry.android)
