@@ -22,15 +22,21 @@ import app.kehdo.core.ui.theme.AuroraColors
 
 @Composable
 fun HomeScreenRoute(
+    onStartNewReply: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    HomeScreen(state = state, onSignOut = viewModel::onSignOut)
+    HomeScreen(
+        state = state,
+        onStartNewReply = onStartNewReply,
+        onSignOut = viewModel::onSignOut
+    )
 }
 
 @Composable
 internal fun HomeScreen(
     state: HomeUiState,
+    onStartNewReply: () -> Unit,
     onSignOut: () -> Unit
 ) {
     Column(
@@ -63,12 +69,12 @@ internal fun HomeScreen(
                 color = AuroraColors.TextMute
             )
             Spacer(Modifier.height(48.dp))
-            Text(
-                text = "Reply generation lands in Phase 4. For now this screen confirms auth + token persistence work.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = AuroraColors.TextDim
+            AuroraButton(
+                text = "New reply",
+                onClick = onStartNewReply,
+                modifier = Modifier.fillMaxWidth()
             )
-            Spacer(Modifier.height(48.dp))
+            Spacer(Modifier.height(16.dp))
             AuroraButton(
                 text = "Sign out",
                 onClick = onSignOut,

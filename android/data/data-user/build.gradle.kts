@@ -5,6 +5,18 @@ plugins {
 
 android {
     namespace = "app.kehdo.data.user"
+
+    // Surface the kehdo.useFakeData gradle.properties flag so [UserModule]
+    // can pick between Fake and Real bindings — same flag as
+    // :data:conversation, so they switch together.
+    buildFeatures {
+        buildConfig = true
+    }
+    defaultConfig {
+        val useFakeData = (project.findProperty("kehdo.useFakeData") as? String)
+            ?.toBooleanStrictOrNull() ?: true
+        buildConfigField("boolean", "USE_FAKE_DATA", useFakeData.toString())
+    }
 }
 
 dependencies {

@@ -15,6 +15,10 @@ import app.kehdo.feature.home.HomeRoute
 import app.kehdo.feature.home.homeGraph
 import app.kehdo.feature.onboarding.OnboardingRoute
 import app.kehdo.feature.onboarding.onboardingGraph
+import app.kehdo.feature.reply.ReplyRoute
+import app.kehdo.feature.reply.replyGraph
+import app.kehdo.feature.upload.UploadRoute
+import app.kehdo.feature.upload.uploadGraph
 
 @Composable
 fun RootNavGraph(
@@ -71,7 +75,25 @@ fun RootNavGraph(
                 }
             }
         )
-        homeGraph()
+        homeGraph(
+            onStartNewReply = {
+                navController.navigate(UploadRoute.GRAPH)
+            }
+        )
+        uploadGraph(
+            onConversationReady = { conversationId ->
+                navController.navigate(ReplyRoute.reply(conversationId)) {
+                    popUpTo(UploadRoute.GRAPH) { inclusive = true }
+                }
+            }
+        )
+        replyGraph(
+            onDone = {
+                navController.navigate(HomeRoute.GRAPH) {
+                    popUpTo(HomeRoute.GRAPH) { inclusive = true }
+                }
+            }
+        )
     }
 }
 
