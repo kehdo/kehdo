@@ -4,16 +4,17 @@ import com.google.cloud.vertexai.VertexAI;
 import com.google.cloud.vertexai.api.GenerationConfig;
 import com.google.cloud.vertexai.generativeai.GenerativeModel;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Provisions the Vertex AI client + Gemini model only when
- * {@code kehdo.ai.llm.provider=gcp}. Auth is via Application Default
- * Credentials — locally that's the file gcloud writes to
+ * Provisions the Vertex AI client + Gemini model whenever Vertex is in
+ * play — that's {@code kehdo.ai.llm.provider=gcp} (Vertex-only) or
+ * {@code =failover} (Vertex primary + OpenAI fallback). Auth is via
+ * Application Default Credentials — locally the file gcloud writes to
  * {@code %APPDATA%\gcloud\application_default_credentials.json}; in
- * production, the platform's attached service account / Workload Identity
+ * production the platform's attached service account / Workload Identity
  * is picked up automatically.
  *
  * <p>{@link GenerationConfig} is wired with
@@ -23,7 +24,8 @@ import org.springframework.context.annotation.Configuration;
  * fences, no preamble, just bytes the parser can hand directly to Jackson.</p>
  */
 @Configuration
-@ConditionalOnProperty(name = "kehdo.ai.llm.provider", havingValue = "gcp")
+@ConditionalOnExpression(
+        "'${kehdo.ai.llm.provider:stub}' == 'gcp' || '${kehdo.ai.llm.provider:stub}' == 'failover'")
 public class VertexAiConfig {
 
     @Bean(destroyMethod = "close")
