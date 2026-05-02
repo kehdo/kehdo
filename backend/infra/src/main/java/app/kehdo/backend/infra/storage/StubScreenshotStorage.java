@@ -1,7 +1,7 @@
 package app.kehdo.backend.infra.storage;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Profile;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.time.Clock;
@@ -13,14 +13,14 @@ import java.util.UUID;
  * Placeholder storage adapter. Returns a fake presigned URL pointing at a
  * non-routable host on upload, and a tiny canned 1×1 PNG on download — so
  * the OCR adapter (Phase 4 PR 6) and conversations controller can be
- * exercised before real storage lands in PR 12.
+ * exercised without real storage running.
  *
- * <p>Active when no real {@link ScreenshotStorage} bean is registered —
- * Phase 4 PR 12's {@code S3ScreenshotStorage} will out-rank this on the
- * default profile. Tests under {@code test} profile keep this bean.</p>
+ * <p>Active when {@code kehdo.storage.provider=stub} (the default).
+ * Set {@code kehdo.storage.provider=s3} to use {@link S3ScreenshotStorage}
+ * (works with AWS S3, MinIO, and Cloudflare R2).</p>
  */
 @Service
-@Profile({"stub-storage", "test", "default", "local"})
+@ConditionalOnProperty(name = "kehdo.storage.provider", havingValue = "stub", matchIfMissing = true)
 public class StubScreenshotStorage implements ScreenshotStorage {
 
     /**

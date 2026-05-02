@@ -65,12 +65,22 @@ kehdo:
     private-key-path: ${KEHDO_JWT_PRIVATE_KEY_PATH:classpath:keys/jwt-private.pem}
 
   storage:
+    # Object-storage backend. "stub" returns a canned 1×1 PNG on download
+    # and a non-routable presigned URL — fine for local dev without
+    # MinIO. Flip to "s3" to use AWS S3 / MinIO / Cloudflare R2.
+    provider: ${KEHDO_STORAGE_PROVIDER:stub}        # stub | s3
     s3:
+      # Set endpoint to the MinIO / R2 host explicitly; leave blank for
+      # real AWS S3 (the SDK derives it from region).
       endpoint: ${KEHDO_S3_ENDPOINT:http://localhost:9000}
+      region: ${KEHDO_S3_REGION:us-east-1}
       bucket: ${KEHDO_S3_BUCKET:kehdo-screenshots-dev}
       access-key: ${KEHDO_S3_ACCESS_KEY:minioadmin}
       secret-key: ${KEHDO_S3_SECRET_KEY:minioadmin}
       presigned-url-ttl-minutes: 5
+      # MinIO requires path-style (host/bucket/key); AWS S3 uses
+      # virtual-hosted-style by default.
+      force-path-style: ${KEHDO_S3_FORCE_PATH_STYLE:true}
 
   rate-limit:
     free-daily-replies: 5
@@ -86,7 +96,7 @@ kehdo:
     # dev / CI never touches a cloud API. Flip individually as adapters
     # ship: ocr.provider=gcp (PR 6), llm.provider=gcp (PR 7) → openai
     # (PR 8 failover composes both), speaker.provider=gcp (PR 9),
-    # moderation.provider=openai (PR 11).
+    # moderation.provider=openai (PR 13).
     ocr:
       provider: ${KEHDO_AI_OCR_PROVIDER:stub}        # stub | gcp
     llm:
@@ -104,6 +114,7 @@ kehdo:
     openai:
       api-key: ${OPENAI_API_KEY:}
       model: ${OPENAI_MODEL:gpt-4o-mini}
+      moderation-model: ${OPENAI_MODERATION_MODEL:omni-moderation-latest}
       role: failover
     google-vision:
       credentials-path: ${GOOGLE_APPLICATION_CREDENTIALS:}
@@ -142,6 +153,7 @@ resilience4j:
       llm-vertex: { max-attempts: 2, wait-duration: 250ms }
       llm-openai: { max-attempts: 2, wait-duration: 250ms }
       ocr-vision: { max-attempts: 2, wait-duration: 250ms }
+      moderation: { max-attempts: 2, wait-duration: 250ms }
 
 logging:
   level:

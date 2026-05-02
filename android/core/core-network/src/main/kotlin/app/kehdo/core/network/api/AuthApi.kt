@@ -4,6 +4,7 @@ import app.kehdo.core.network.api.dto.AuthResponseDto
 import app.kehdo.core.network.api.dto.RefreshRequestDto
 import app.kehdo.core.network.api.dto.SignInRequestDto
 import app.kehdo.core.network.api.dto.SignUpRequestDto
+import app.kehdo.core.network.api.dto.UsageResponseDto
 import app.kehdo.core.network.api.dto.UserDto
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -32,8 +33,12 @@ interface AuthApi {
     /**
      * Returns the access-token-validated current user. Lives next to the auth
      * calls because it relies on the same Bearer token; will move to a
-     * dedicated UserApi when /me/usage and profile-edit endpoints land.
+     * dedicated UserApi when profile-edit endpoints land.
      */
     @GET("me")
     suspend fun getCurrentUser(): UserDto
+
+    /** Daily reply quota state for the authenticated user. */
+    @GET("me/usage")
+    suspend fun getCurrentUsage(): UsageResponseDto
 }
