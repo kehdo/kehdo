@@ -131,9 +131,10 @@ canonical reference at `/contracts/openapi/kehdo.v1.yaml`.)
 
 ---
 
-## 📦 Phase 2 status — auth endpoints SHIPPED
+## 📦 Shipped status — through v0.5.0
 
-Released as `v0.3.0`. The following are LIVE behind `/v1/`:
+Phase 2 (auth) shipped in `v0.3.0`. Phase 4 (AI pipeline + quota + storage)
+shipped in `v0.5.0`. The following are LIVE behind `/v1/`:
 
 | Endpoint | Method | Status |
 |---|---|---|
@@ -143,6 +144,11 @@ Released as `v0.3.0`. The following are LIVE behind `/v1/`:
 | `/auth/refresh` | POST | ✅ rotates refresh token in place; same session id |
 | `/auth/logout` | POST | ✅ requires Bearer JWT; revokes session via the `sid` claim |
 | `/me` | GET | ✅ Phase 3.5 — returns the authenticated user's profile; 401 if the user has been soft-deleted since the access token was issued |
+| `/me/usage` | GET | ✅ Phase 4 (v0.5.0) — Redis daily counter; returns `dailyUsed/dailyLimit/resetAt` (UTC midnight); 5/day STARTER, 100/day PRO, sentinel for UNLIMITED |
+| `/tones` | GET | ✅ Phase 4 (v0.5.0) — full 18-tone catalog (8 free + 10 pro) seeded server-side with `isPro` flag |
+| `/conversations` | POST | ✅ Phase 4 (v0.5.0) — reserves row in `PENDING_UPLOAD`; returns presigned S3 PUT URL (5-min TTL); MinIO in dev, S3 in prod |
+| `/conversations/{id}/generate` | POST | ✅ Phase 4 (v0.5.0) — full pipeline: Cloud Vision OCR → heuristic speaker attribution → Vertex Gemini 2.0 Flash (primary) / OpenAI gpt-4o-mini (failover) → OpenAI omni-moderation; decrements quota; `402 DAILY_QUOTA_EXCEEDED` when over |
+| `/replies/{id}/refine` | POST | ✅ Phase 4 (v0.5.0) — same LLM pipeline + quota counter as `/generate` |
 | `/actuator/{health,info,metrics,prometheus}` | GET | ✅ public ops probes |
 
 Implementation map:
@@ -194,9 +200,9 @@ Tests in `:auth/src/test/java/`:
   `contracts/CHANGELOG.md`
 - Password reset, email confirmation — need email provider first
 - 2FA / TOTP — post-launch
-- Daily quota enforcement — depends on Phase 4 AI pipeline
 - Per-IP / per-user rate limiting on auth endpoints — Redis token bucket scaffolded but not wired
-- Conversation, reply, tone endpoints — Phase 4
+- `GET /conversations` (history page) and `GET/DELETE /conversations/{id}` —
+  Phase 5 with the History feature module
 - AWS deployment to `api.staging.kehdo.app` / `api.kehdo.app`
 
 ---

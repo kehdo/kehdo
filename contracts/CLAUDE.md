@@ -104,12 +104,13 @@ contract and know "this isn't shipped yet."
 | `/auth/refresh` | POST | ✅ | ✅ | Phase 2 — rotates refresh token in place |
 | `/auth/logout` | POST | ✅ | ✅ | Phase 2 — requires Bearer JWT |
 | `/me` | GET | ✅ | ✅ | Phase 3.5 — returns the authenticated user's `User` projection; `401 UNAUTHORIZED` when the access token's user is soft-deleted |
-| `/me/usage` | GET | ✅ | ❌ | Not yet — depends on quota enforcement (Phase 4) |
-| `/conversations` | POST/GET | ✅ | ❌ | Phase 4 |
-| `/conversations/{id}` | GET/DELETE | ✅ | ❌ | Phase 4 |
-| `/conversations/{id}/generate` | POST | ✅ | ❌ | Phase 4 — depends on `:ai` module + ADR 0006 implementation |
-| `/replies/{id}/refine` | POST | ✅ | ❌ | Phase 4 |
-| `/tones` | GET | ✅ | ❌ | Phase 4 |
+| `/me/usage` | GET | ✅ | ✅ | Phase 4 (v0.5.0) — Redis-backed daily counter, returns `dailyUsed/dailyLimit/resetAt` (UTC midnight). 5/day STARTER, 100/day PRO, sentinel for UNLIMITED |
+| `/conversations` | POST | ✅ | ✅ | Phase 4 (v0.5.0) — reserves a row in `PENDING_UPLOAD`, returns presigned S3 PUT URL (5-min TTL). MinIO in dev, S3 in prod |
+| `/conversations` | GET | ✅ | ❌ | Phase 5 — history endpoint deferred to the History feature module |
+| `/conversations/{id}` | GET/DELETE | ✅ | ❌ | Phase 5 — depends on history endpoint |
+| `/conversations/{id}/generate` | POST | ✅ | ✅ | Phase 4 (v0.5.0) — full pipeline: Cloud Vision OCR → heuristic speaker attribution → Vertex AI Gemini 2.0 Flash (primary) / OpenAI gpt-4o-mini (failover) → OpenAI omni-moderation. Decrements daily quota; returns `402 DAILY_QUOTA_EXCEEDED` when over |
+| `/replies/{id}/refine` | POST | ✅ | ✅ | Phase 4 (v0.5.0) — same LLM pipeline + quota counter as `/generate` |
+| `/tones` | GET | ✅ | ✅ | Phase 4 (v0.5.0) — full 18-tone catalog (8 free + 10 pro) seeded server-side with `isPro` flag |
 
 Keep this table accurate when endpoints flip from spec-only to implemented.
 Out-of-date entries are worse than missing ones — an Android dev who reads
