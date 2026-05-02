@@ -1,15 +1,15 @@
 package app.kehdo.backend.ai.safety;
 
-import org.springframework.context.annotation.Profile;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 /**
- * Phase 4 PR 3 placeholder. Allows every candidate. The real moderation
- * gate (Phase 4 PR 11) replaces this — never ship to production with
- * this bean active.
+ * Placeholder moderation. Allows every candidate. Real moderation lands in
+ * Phase 4 PR 11 — flip {@code kehdo.ai.moderation.provider=openai} when
+ * that adapter ships. Never deploy to production with the stub active.
  */
 @Service
-@Profile({"stub-llm", "test", "default"})
+@ConditionalOnProperty(name = "kehdo.ai.moderation.provider", havingValue = "stub", matchIfMissing = true)
 public class AllowAllModerationClient implements ModerationClient {
 
     @Override
