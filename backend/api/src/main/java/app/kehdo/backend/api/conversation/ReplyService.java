@@ -10,6 +10,10 @@ import app.kehdo.backend.conversation.Conversation;
 import app.kehdo.backend.conversation.ConversationRepository;
 import app.kehdo.backend.conversation.Reply;
 import app.kehdo.backend.conversation.ReplyRepository;
+import app.kehdo.backend.user.QuotaExceededException;
+import app.kehdo.backend.user.QuotaService;
+import app.kehdo.backend.user.User;
+import app.kehdo.backend.user.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,8 +28,9 @@ import java.util.UUID;
  *
  * <p>Refine is intentionally split out of {@link ConversationService}
  * because it acts on a reply by id without needing the conversation
- * pipeline (no OCR, no speaker attribution). Same security model
- * though — every load goes through the conversation's user scope.</p>
+ * pipeline (no OCR, no speaker attribution). Same security model and
+ * same daily quota though — refine counts against the same limit as
+ * generate per the contract.</p>
  */
 @Service
 public class ReplyService {
@@ -33,16 +38,22 @@ public class ReplyService {
     private final ReplyRepository replyRepository;
     private final ConversationRepository conversationRepository;
     private final RefineOrchestrator refineOrchestrator;
+    private final UserRepository userRepository;
+    private final QuotaService quotaService;
     private final Clock clock;
 
     public ReplyService(
             ReplyRepository replyRepository,
             ConversationRepository conversationRepository,
             RefineOrchestrator refineOrchestrator,
+            UserRepository userRepository,
+            QuotaService quotaService,
             Clock clock) {
         this.replyRepository = replyRepository;
         this.conversationRepository = conversationRepository;
         this.refineOrchestrator = refineOrchestrator;
+        this.userRepository = userRepository;
+        this.quotaService = quotaService;
         this.clock = clock;
     }
 
@@ -67,6 +78,21 @@ public class ReplyService {
                         ErrorCode.NOT_FOUND,
                         HttpStatus.NOT_FOUND.value(),
                         "Reply not found."));
+
+        // Quota check — refine counts against the same daily limit as generate.
+        User user = userRepository.findActiveById(userId)
+                .orElseThrow(() -> new ApiException(
+                        ErrorCode.UNAUTHORIZED,
+                        HttpStatus.UNAUTHORIZED.value(),
+                        "Authentication required."));
+        try {
+            quotaService.consumeOrThrow(userId, user.getPlan());
+        } catch (QuotaExceededException over) {
+            throw new ApiException(
+                    "DAILY_QUOTA_EXCEEDED",
+                    HttpStatus.PAYMENT_REQUIRED.value(),
+                    "Daily reply quota exceeded; upgrade to continue.");
+        }
 
         RefineOrchestrator.RefineOutput output;
         try {

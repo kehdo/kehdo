@@ -1,12 +1,15 @@
 package app.kehdo.backend.api.me;
 
 import app.kehdo.backend.api.auth.dto.UserDto;
+import app.kehdo.backend.api.me.dto.UsageResponse;
 import app.kehdo.backend.auth.web.JwtAuthenticationFilter;
 import app.kehdo.backend.common.error.ApiException;
 import app.kehdo.backend.common.error.ErrorCode;
+import app.kehdo.backend.user.QuotaService;
 import app.kehdo.backend.user.User;
 import app.kehdo.backend.user.UserPlan;
 import app.kehdo.backend.user.UserRepository;
+import app.kehdo.backend.user.UserUsage;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 
@@ -22,8 +25,9 @@ import static org.mockito.Mockito.when;
 class MeControllerTest {
 
     private final UserRepository userRepository = mock(UserRepository.class);
+    private final QuotaService quotaService = mock(QuotaService.class);
     private final HttpServletRequest request = mock(HttpServletRequest.class);
-    private final MeController controller = new MeController(userRepository);
+    private final MeController controller = new MeController(userRepository, quotaService);
 
     @Test
     void should_return_user_dto_when_authenticated() {
@@ -68,6 +72,30 @@ class MeControllerTest {
         assertThatThrownBy(() -> controller.getCurrentUser(request))
                 .isInstanceOf(ApiException.class)
                 .hasMessage("Session no longer valid.")
+                .extracting("code", "httpStatus")
+                .containsExactly(ErrorCode.UNAUTHORIZED, 401);
+    }
+
+    @Test
+    void usage_returns_quota_snapshot_for_authenticated_user() {
+        UUID userId = UUID.randomUUID();
+        Instant resetAt = Instant.parse("2026-05-04T00:00:00Z");
+        when(request.getAttribute(JwtAuthenticationFilter.USER_ID_ATTRIBUTE)).thenReturn(userId);
+        when(quotaService.current(userId)).thenReturn(new UserUsage(3, 5, resetAt));
+
+        UsageResponse usage = controller.getCurrentUsage(request);
+
+        assertThat(usage.dailyUsed()).isEqualTo(3);
+        assertThat(usage.dailyLimit()).isEqualTo(5);
+        assertThat(usage.resetAt()).isEqualTo(resetAt);
+    }
+
+    @Test
+    void usage_throws_unauthorized_when_user_id_attribute_missing() {
+        when(request.getAttribute(JwtAuthenticationFilter.USER_ID_ATTRIBUTE)).thenReturn(null);
+
+        assertThatThrownBy(() -> controller.getCurrentUsage(request))
+                .isInstanceOf(ApiException.class)
                 .extracting("code", "httpStatus")
                 .containsExactly(ErrorCode.UNAUTHORIZED, 401);
     }

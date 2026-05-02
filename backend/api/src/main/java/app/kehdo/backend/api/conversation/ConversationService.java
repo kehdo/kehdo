@@ -21,6 +21,10 @@ import app.kehdo.backend.conversation.Reply;
 import app.kehdo.backend.conversation.ReplyRepository;
 import app.kehdo.backend.infra.storage.PresignedUpload;
 import app.kehdo.backend.infra.storage.ScreenshotStorage;
+import app.kehdo.backend.user.QuotaExceededException;
+import app.kehdo.backend.user.QuotaService;
+import app.kehdo.backend.user.User;
+import app.kehdo.backend.user.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -47,6 +51,8 @@ public class ConversationService {
     private final ReplyRepository replyRepository;
     private final ScreenshotStorage screenshotStorage;
     private final GenerationOrchestrator generationOrchestrator;
+    private final UserRepository userRepository;
+    private final QuotaService quotaService;
     private final Clock clock;
 
     public ConversationService(
@@ -54,11 +60,15 @@ public class ConversationService {
             ReplyRepository replyRepository,
             ScreenshotStorage screenshotStorage,
             GenerationOrchestrator generationOrchestrator,
+            UserRepository userRepository,
+            QuotaService quotaService,
             Clock clock) {
         this.conversationRepository = conversationRepository;
         this.replyRepository = replyRepository;
         this.screenshotStorage = screenshotStorage;
         this.generationOrchestrator = generationOrchestrator;
+        this.userRepository = userRepository;
+        this.quotaService = quotaService;
         this.clock = clock;
     }
 
@@ -107,10 +117,29 @@ public class ConversationService {
                     HttpStatus.CONFLICT.value(),
                     "Upload the screenshot before requesting replies.");
         }
+
+        // Daily quota check (CLAUDE.md security rule "5/day free, 100/day paid").
+        // Throws QuotaExceededException → mapped to 402 DAILY_QUOTA_EXCEEDED below.
+        // Done before status transitions so a quota-blocked call doesn't leave
+        // the conversation in PROCESSING with no generation behind it.
+        User user = userRepository.findActiveById(userId)
+                .orElseThrow(() -> new ApiException(
+                        ErrorCode.UNAUTHORIZED,
+                        HttpStatus.UNAUTHORIZED.value(),
+                        "Authentication required."));
+        try {
+            quotaService.consumeOrThrow(userId, user.getPlan());
+        } catch (QuotaExceededException over) {
+            throw new ApiException(
+                    "DAILY_QUOTA_EXCEEDED",
+                    HttpStatus.PAYMENT_REQUIRED.value(),
+                    "Daily reply quota exceeded; upgrade to continue.");
+        }
+
         if (conversation.getStatus() == ConversationStatus.PENDING_UPLOAD) {
             // First call after upload — flip the status before running.
-            // Phase 4 PR 12 will move this transition to an explicit
-            // "upload complete" callback from the storage adapter.
+            // Real upload-complete callback from the storage adapter is a
+            // future enhancement.
             conversation.markProcessing();
         }
 
