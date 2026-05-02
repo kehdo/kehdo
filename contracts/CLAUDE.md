@@ -103,7 +103,7 @@ contract and know "this isn't shipped yet."
 | `/auth/google` | POST | ✅ | ❌ | DEFERRED — backend will return `501 Not Implemented` until social auth ships post-Phase-2 |
 | `/auth/refresh` | POST | ✅ | ✅ | Phase 2 — rotates refresh token in place |
 | `/auth/logout` | POST | ✅ | ✅ | Phase 2 — requires Bearer JWT |
-| `/me` | GET | ✅ | ❌ | Not yet — planned alongside or just after Phase 3 (Android profile screen) |
+| `/me` | GET | ✅ | ✅ | Phase 3.5 — returns the authenticated user's `User` projection; `401 UNAUTHORIZED` when the access token's user is soft-deleted |
 | `/me/usage` | GET | ✅ | ❌ | Not yet — depends on quota enforcement (Phase 4) |
 | `/conversations` | POST/GET | ✅ | ❌ | Phase 4 |
 | `/conversations/{id}` | GET/DELETE | ✅ | ❌ | Phase 4 |
