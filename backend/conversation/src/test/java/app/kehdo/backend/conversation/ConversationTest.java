@@ -28,21 +28,33 @@ class ConversationTest {
     }
 
     @Test
-    void on_screenshot_uploaded_advances_to_processing() {
+    void assign_upload_key_stores_key_without_changing_status() {
         Conversation c = new Conversation(UUID.randomUUID(), UUID.randomUUID(), Instant.parse("2026-05-02T10:00:00Z"));
         Instant before = c.getUpdatedAt();
 
-        c.onScreenshotUploaded("uploads/abc.png");
+        c.assignUploadKey("uploads/abc.png");
 
-        assertThat(c.getStatus()).isEqualTo(ConversationStatus.PROCESSING);
+        // Status stays PENDING_UPLOAD; markProcessing() is the explicit transition.
+        assertThat(c.getStatus()).isEqualTo(ConversationStatus.PENDING_UPLOAD);
         assertThat(c.getScreenshotObjectKey()).isEqualTo("uploads/abc.png");
         assertThat(c.getUpdatedAt()).isAfterOrEqualTo(before);
     }
 
     @Test
+    void mark_processing_advances_status() {
+        Conversation c = new Conversation(UUID.randomUUID(), UUID.randomUUID(), Instant.parse("2026-05-02T10:00:00Z"));
+        c.assignUploadKey("uploads/abc.png");
+
+        c.markProcessing();
+
+        assertThat(c.getStatus()).isEqualTo(ConversationStatus.PROCESSING);
+    }
+
+    @Test
     void on_ocr_completed_stores_messages_but_does_not_change_status() {
         Conversation c = new Conversation(UUID.randomUUID(), UUID.randomUUID(), Instant.parse("2026-05-02T10:00:00Z"));
-        c.onScreenshotUploaded("uploads/abc.png");
+        c.assignUploadKey("uploads/abc.png");
+        c.markProcessing();
         Instant ocrAt = Instant.parse("2026-05-02T10:00:05Z");
         var messages = List.of(new ParsedMessage(ParsedMessage.Speaker.THEM, "hi", 0.95));
 
@@ -57,7 +69,8 @@ class ConversationTest {
     @Test
     void on_generation_completed_marks_ready_with_model_metadata() {
         Conversation c = new Conversation(UUID.randomUUID(), UUID.randomUUID(), Instant.parse("2026-05-02T10:00:00Z"));
-        c.onScreenshotUploaded("uploads/abc.png");
+        c.assignUploadKey("uploads/abc.png");
+        c.markProcessing();
         c.onOcrCompleted(
                 List.of(new ParsedMessage(ParsedMessage.Speaker.THEM, "hi", 0.95)),
                 Instant.parse("2026-05-02T10:00:05Z"));
@@ -73,7 +86,7 @@ class ConversationTest {
     @Test
     void mark_failed_records_reason_and_terminates() {
         Conversation c = new Conversation(UUID.randomUUID(), UUID.randomUUID(), Instant.parse("2026-05-02T10:00:00Z"));
-        c.onScreenshotUploaded("uploads/abc.png");
+        c.assignUploadKey("uploads/abc.png");
 
         c.markFailed("OCR_FAILED");
 

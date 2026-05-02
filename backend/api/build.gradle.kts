@@ -3,6 +3,9 @@ dependencies {
     implementation(project(":common"))
     implementation(project(":auth"))
     implementation(project(":user"))
+    implementation(project(":conversation"))
+    implementation(project(":ai"))
+    implementation(project(":infra"))
 
     implementation("org.springframework.boot:spring-boot-starter:3.2.2")
     implementation("org.springframework.boot:spring-boot-starter-web:3.2.2")

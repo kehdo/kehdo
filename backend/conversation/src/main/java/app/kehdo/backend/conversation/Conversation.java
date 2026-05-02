@@ -85,13 +85,18 @@ public class Conversation {
     // ---- state transitions ---------------------------------------------------
 
     /**
-     * Marks the screenshot as uploaded and transitions to {@link
-     * ConversationStatus#PROCESSING}. Caller is the controller after
-     * confirming the object exists in storage (or just trusting the
-     * client's signal — TBD by Phase 4 PR 12).
+     * Records the storage key the client will upload to. Does NOT transition
+     * status — that happens in {@link #markProcessing()} once the upload is
+     * confirmed (today: when /generate is called, since we don't have an
+     * explicit upload-complete callback yet — that lands in Phase 4 PR 12).
      */
-    public void onScreenshotUploaded(String objectKey) {
+    public void assignUploadKey(String objectKey) {
         this.screenshotObjectKey = objectKey;
+        touch();
+    }
+
+    /** Transition PENDING_UPLOAD → PROCESSING. */
+    public void markProcessing() {
         this.status = ConversationStatus.PROCESSING;
         touch();
     }
