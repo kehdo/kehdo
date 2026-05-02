@@ -288,15 +288,16 @@ If Claude is about to do any of these, **STOP and ask the user first:**
 
 ## 📦 Current project status
 
-- **Phase:** Phase 2 (backend auth) shipped to v0.3.0; Phase 3 (Android scaffold + auth) in progress
+- **Phase:** Phase 4 (AI pipeline + Android conversation flow) shipped to v0.5.0
 - **Tagged releases:**
   - `v0.1.0` — landing page live at kehdo.app
   - `v0.2.0` — landing polish (Sheets waitlist, legal pages, Vercel Analytics, OG image, Vertex AI pivot per ADR 0006)
   - `v0.3.0` — backend auth (BCrypt, RS256 JWT, refresh rotation, signup/login/refresh/logout, disposable-email blocking)
+  - `v0.5.0` — Phase 4 backend + Android: Cloud Vision OCR, heuristic speaker attribution, Vertex AI Gemini 2.0 Flash primary + OpenAI gpt-4o-mini failover, OpenAI omni-moderation, S3 presigned uploads, Redis-backed daily quota with `GET /me/usage`, `GET /tones`, `POST /conversations`, `POST /conversations/{id}/generate`, `POST /replies/{id}/refine`, plus Android conversation flow (upload + reply screens) talking to the backend behind a `kehdo.useFakeData` flag
 - **Live deployments:** kehdo.app + www.kehdo.app + staging.kehdo.app on Vercel. Backend runs locally only (AWS deploy deferred to keep within "no investment yet")
-- **Active workstream:** Phase 3 — Android scaffold + auth (calling our backend `/v1/auth/*` directly; no Firebase Auth)
+- **Active workstream:** Phase 5 — Android beta polish + first end-to-end run against local backend, then Android launch → iOS
 - **Auth strategy:** Backend-driven (NOT Firebase). Android stores access + refresh tokens in EncryptedSharedPreferences and refreshes on 401
-- **Next up:** Phase 4 (AI pipeline per ADR 0006) → Android beta → Android launch → iOS
+- **Next up:** Android beta polish (fix-it pass on the conversation flow against the live local backend) → AWS staging deploy → Android launch → iOS
 - **Deferred / backlog:** see [`docs/BACKLOG.md`](docs/BACKLOG.md) for tracked items (password reset, email confirmation, social login, MFA, AWS deploy, etc.)
 - **Brand:** Aurora palette LOCKED
 - **Product name:** kehdo.app (do NOT use "Flawlessly")
@@ -315,4 +316,4 @@ If Claude is about to do any of these, **STOP and ask the user first:**
 
 ---
 
-*Last updated: 2026-04-22 — initial scaffold*
+*Last updated: 2026-05-03 — post-v0.5.0 (Phase 4 complete)*
