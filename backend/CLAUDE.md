@@ -147,6 +147,9 @@ shipped in `v0.5.0`. The following are LIVE behind `/v1/`:
 | `/me/usage` | GET | ✅ Phase 4 (v0.5.0) — Redis daily counter; returns `dailyUsed/dailyLimit/resetAt` (UTC midnight); 5/day STARTER, 100/day PRO, sentinel for UNLIMITED |
 | `/tones` | GET | ✅ Phase 4 (v0.5.0) — full 18-tone catalog (8 free + 10 pro) seeded server-side with `isPro` flag |
 | `/conversations` | POST | ✅ Phase 4 (v0.5.0) — reserves row in `PENDING_UPLOAD`; returns presigned S3 PUT URL (5-min TTL); MinIO in dev, S3 in prod |
+| `/conversations` | GET | ✅ Phase 5 — paginated history; cursor-based keyset pagination on `(createdAt DESC, id DESC)` so concurrent inserts don't break the cursor; `nextCursor` is opaque base64 |
+| `/conversations/{id}` | GET | ✅ Phase 5 — full conversation read (status + parsed messages + createdAt); 404 if not owned or soft-deleted |
+| `/conversations/{id}` | DELETE | ✅ Phase 5 — soft delete via `deleted_at`; nightly cleanup hard-deletes after 30 days |
 | `/conversations/{id}/generate` | POST | ✅ Phase 4 (v0.5.0) — full pipeline: Cloud Vision OCR → heuristic speaker attribution → Vertex Gemini 2.0 Flash (primary) / OpenAI gpt-4o-mini (failover) → OpenAI omni-moderation; decrements quota; `402 DAILY_QUOTA_EXCEEDED` when over |
 | `/replies/{id}/refine` | POST | ✅ Phase 4 (v0.5.0) — same LLM pipeline + quota counter as `/generate` |
 | `/actuator/{health,info,metrics,prometheus}` | GET | ✅ public ops probes |
@@ -201,9 +204,9 @@ Tests in `:auth/src/test/java/`:
 - Password reset, email confirmation — need email provider first
 - 2FA / TOTP — post-launch
 - Per-IP / per-user rate limiting on auth endpoints — Redis token bucket scaffolded but not wired
-- `GET /conversations` (history page) and `GET/DELETE /conversations/{id}` —
-  Phase 5 with the History feature module
-- AWS deployment to `api.staging.kehdo.app` / `api.kehdo.app`
+- AWS production deployment to `api.kehdo.app` (Phase 5 stages on Fly.io at
+  `api.staging.kehdo.app`; AWS prod tier stays in `/docs/BACKLOG.md` until
+  budget allows)
 
 ---
 

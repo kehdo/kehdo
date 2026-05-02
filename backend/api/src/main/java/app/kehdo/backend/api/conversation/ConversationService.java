@@ -25,14 +25,16 @@ import app.kehdo.backend.user.QuotaExceededException;
 import app.kehdo.backend.user.QuotaService;
 import app.kehdo.backend.user.User;
 import app.kehdo.backend.user.UserRepository;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.format.DateTimeParseException;
+import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 
@@ -84,16 +86,58 @@ public class ConversationService {
 
     @Transactional(readOnly = true)
     public ConversationPageDto list(UUID userId, int limit, String cursor) {
-        // Cursor-based pagination is a Phase 4 PR 12 add — for PR 4 we
-        // return a single page sorted desc by createdAt. The contract's
-        // nextCursor is wired and stays null until cursor support lands.
-        Page<Conversation> page = conversationRepository.findActiveByUser(
-                userId,
-                PageRequest.of(0, limit));
-        List<ConversationDto> items = page.getContent().stream()
-                .map(ConversationDto::from)
-                .toList();
-        return new ConversationPageDto(items, /* nextCursor */ null);
+        Cursor decoded = decodeCursor(cursor);
+        // Fetch limit+1 so we can detect whether more pages exist without
+        // a separate count query. The +1th row is dropped from the
+        // response and used as the next cursor.
+        PageRequest page = PageRequest.of(0, limit + 1);
+        List<Conversation> rows = decoded == null
+                ? conversationRepository.findActivePageByUser(userId, page)
+                : conversationRepository.findActivePageByUserAfterCursor(
+                        userId, decoded.createdAt(), decoded.id(), page);
+
+        boolean hasMore = rows.size() > limit;
+        List<Conversation> trimmed = hasMore ? rows.subList(0, limit) : rows;
+        String nextCursor = hasMore
+                ? encodeCursor(trimmed.get(trimmed.size() - 1))
+                : null;
+
+        List<ConversationDto> items = trimmed.stream().map(ConversationDto::from).toList();
+        return new ConversationPageDto(items, nextCursor);
+    }
+
+    /**
+     * Cursor wire format: URL-safe base64 of "createdAtIso|id". Opaque to
+     * the client — never parse it on the Android / iOS side. Stable as
+     * long as the server keeps the same composite-key sort, which means
+     * (createdAt DESC, id DESC) is part of the API contract now.
+     */
+    private record Cursor(Instant createdAt, UUID id) {}
+
+    private static Cursor decodeCursor(String raw) {
+        if (raw == null || raw.isBlank()) return null;
+        try {
+            byte[] decoded = Base64.getUrlDecoder().decode(raw);
+            String[] parts = new String(decoded, StandardCharsets.UTF_8).split("\\|", 2);
+            if (parts.length != 2) {
+                throw new ApiException(
+                        ErrorCode.BAD_REQUEST,
+                        HttpStatus.BAD_REQUEST.value(),
+                        "Invalid pagination cursor.");
+            }
+            return new Cursor(Instant.parse(parts[0]), UUID.fromString(parts[1]));
+        } catch (IllegalArgumentException | DateTimeParseException malformed) {
+            throw new ApiException(
+                    ErrorCode.BAD_REQUEST,
+                    HttpStatus.BAD_REQUEST.value(),
+                    "Invalid pagination cursor.");
+        }
+    }
+
+    private static String encodeCursor(Conversation last) {
+        String raw = last.getCreatedAt().toString() + "|" + last.getId();
+        return Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(raw.getBytes(StandardCharsets.UTF_8));
     }
 
     @Transactional(readOnly = true)

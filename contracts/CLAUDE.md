@@ -106,8 +106,8 @@ contract and know "this isn't shipped yet."
 | `/me` | GET | ✅ | ✅ | Phase 3.5 — returns the authenticated user's `User` projection; `401 UNAUTHORIZED` when the access token's user is soft-deleted |
 | `/me/usage` | GET | ✅ | ✅ | Phase 4 (v0.5.0) — Redis-backed daily counter, returns `dailyUsed/dailyLimit/resetAt` (UTC midnight). 5/day STARTER, 100/day PRO, sentinel for UNLIMITED |
 | `/conversations` | POST | ✅ | ✅ | Phase 4 (v0.5.0) — reserves a row in `PENDING_UPLOAD`, returns presigned S3 PUT URL (5-min TTL). MinIO in dev, S3 in prod |
-| `/conversations` | GET | ✅ | ❌ | Phase 5 — history endpoint deferred to the History feature module |
-| `/conversations/{id}` | GET/DELETE | ✅ | ❌ | Phase 5 — depends on history endpoint |
+| `/conversations` | GET | ✅ | ✅ | Phase 5 — paginated history list, cursor-based (URL-safe base64 of `createdAt\|id`); `nextCursor: null` on last page |
+| `/conversations/{id}` | GET/DELETE | ✅ | ✅ | Phase 5 — single conversation read (with parsed messages); soft delete via `deleted_at`. Hard-deleted by nightly cleanup after 30 days |
 | `/conversations/{id}/generate` | POST | ✅ | ✅ | Phase 4 (v0.5.0) — full pipeline: Cloud Vision OCR → heuristic speaker attribution → Vertex AI Gemini 2.0 Flash (primary) / OpenAI gpt-4o-mini (failover) → OpenAI omni-moderation. Decrements daily quota; returns `402 DAILY_QUOTA_EXCEEDED` when over |
 | `/replies/{id}/refine` | POST | ✅ | ✅ | Phase 4 (v0.5.0) — same LLM pipeline + quota counter as `/generate` |
 | `/tones` | GET | ✅ | ✅ | Phase 4 (v0.5.0) — full 18-tone catalog (8 free + 10 pro) seeded server-side with `isPro` flag |

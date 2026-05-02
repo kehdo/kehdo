@@ -8,6 +8,7 @@ import app.kehdo.backend.ai.orchestrator.GenerationRequest;
 import app.kehdo.backend.ai.speaker.SpeakerAttributor.AttributedLine;
 import app.kehdo.backend.ai.speaker.SpeakerAttributor.AttributedLine.Speaker;
 import app.kehdo.backend.api.conversation.dto.ConversationDto;
+import app.kehdo.backend.api.conversation.dto.ConversationPageDto;
 import app.kehdo.backend.api.conversation.dto.CreateConversationResponse;
 import app.kehdo.backend.api.conversation.dto.GenerateResponse;
 import app.kehdo.backend.common.error.ApiException;
@@ -26,10 +27,13 @@ import app.kehdo.backend.user.UserRepository;
 import app.kehdo.backend.user.UserUsage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Pageable;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -37,6 +41,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -89,6 +94,94 @@ class ConversationServiceTest {
         assertThat(resp.conversationId()).isNotNull();
         assertThat(resp.uploadUrl()).contains("uploads.kehdo.invalid");
         assertThat(resp.uploadExpiresAt()).isEqualTo(NOW.plusSeconds(300));
+    }
+
+    @Test
+    void list_returns_first_page_with_no_cursor_when_results_fit_in_one_page() {
+        UUID userId = UUID.randomUUID();
+        UUID a = UUID.randomUUID();
+        UUID b = UUID.randomUUID();
+        when(conversationRepository.findActivePageByUser(eq(userId), any(Pageable.class)))
+                .thenReturn(List.of(
+                        conv(a, userId, NOW),
+                        conv(b, userId, NOW.minusSeconds(60))));
+
+        ConversationPageDto page = service.list(userId, 20, null);
+
+        assertThat(page.items()).hasSize(2);
+        assertThat(page.items()).extracting(ConversationDto::id).containsExactly(a, b);
+        // No more rows than asked → no nextCursor.
+        assertThat(page.nextCursor()).isNull();
+    }
+
+    @Test
+    void list_emits_next_cursor_when_more_rows_exist() {
+        UUID userId = UUID.randomUUID();
+        UUID a = UUID.randomUUID();
+        UUID b = UUID.randomUUID();
+        UUID c = UUID.randomUUID();
+        // Service asks for limit+1 (3) to detect "more pages"; we return 3.
+        when(conversationRepository.findActivePageByUser(eq(userId), any(Pageable.class)))
+                .thenReturn(List.of(
+                        conv(a, userId, NOW),
+                        conv(b, userId, NOW.minusSeconds(60)),
+                        conv(c, userId, NOW.minusSeconds(120))));
+
+        ConversationPageDto page = service.list(userId, 2, null);
+
+        // Trim to the requested limit.
+        assertThat(page.items()).hasSize(2);
+        assertThat(page.items()).extracting(ConversationDto::id).containsExactly(a, b);
+        // Cursor anchors on the last returned row (b), not the look-ahead row (c).
+        assertThat(page.nextCursor()).isNotNull();
+        String decoded = new String(
+                Base64.getUrlDecoder().decode(page.nextCursor()),
+                StandardCharsets.UTF_8);
+        assertThat(decoded).isEqualTo(NOW.minusSeconds(60) + "|" + b);
+    }
+
+    @Test
+    void list_with_valid_cursor_calls_keyset_query_and_skips_first_page() {
+        UUID userId = UUID.randomUUID();
+        UUID seen = UUID.randomUUID();
+        UUID nextRow = UUID.randomUUID();
+        Instant cursorTs = NOW.minusSeconds(60);
+        String cursor = Base64.getUrlEncoder().withoutPadding().encodeToString(
+                (cursorTs + "|" + seen).getBytes(StandardCharsets.UTF_8));
+        when(conversationRepository.findActivePageByUserAfterCursor(
+                eq(userId), eq(cursorTs), eq(seen), any(Pageable.class)))
+                .thenReturn(List.of(conv(nextRow, userId, NOW.minusSeconds(120))));
+
+        ConversationPageDto page = service.list(userId, 20, cursor);
+
+        assertThat(page.items()).hasSize(1);
+        assertThat(page.items().get(0).id()).isEqualTo(nextRow);
+        assertThat(page.nextCursor()).isNull();
+        // The non-cursor query should NOT have been used.
+        verify(conversationRepository, never())
+                .findActivePageByUser(any(UUID.class), any(Pageable.class));
+    }
+
+    @Test
+    void list_throws_400_for_malformed_cursor() {
+        UUID userId = UUID.randomUUID();
+
+        assertThatThrownBy(() -> service.list(userId, 20, "not-base64!@#"))
+                .isInstanceOf(ApiException.class)
+                .extracting("code", "httpStatus")
+                .containsExactly("BAD_REQUEST", 400);
+    }
+
+    @Test
+    void list_throws_400_when_cursor_decodes_but_payload_is_garbage() {
+        UUID userId = UUID.randomUUID();
+        String garbageCursor = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString("not-iso|not-uuid".getBytes(StandardCharsets.UTF_8));
+
+        assertThatThrownBy(() -> service.list(userId, 20, garbageCursor))
+                .isInstanceOf(ApiException.class)
+                .extracting("code", "httpStatus")
+                .containsExactly("BAD_REQUEST", 400);
     }
 
     @Test
@@ -217,5 +310,9 @@ class ConversationServiceTest {
 
     private static User newUser(UUID id, UserPlan plan) {
         return new User(id, "u@example.com", "$2a$12$hash", "U", plan, NOW);
+    }
+
+    private static Conversation conv(UUID id, UUID userId, Instant createdAt) {
+        return new Conversation(id, userId, createdAt);
     }
 }
