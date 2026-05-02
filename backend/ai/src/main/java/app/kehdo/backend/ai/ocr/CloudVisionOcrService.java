@@ -4,9 +4,16 @@ import app.kehdo.backend.infra.storage.ScreenshotStorage;
 import com.google.cloud.vision.v1.AnnotateImageRequest;
 import com.google.cloud.vision.v1.AnnotateImageResponse;
 import com.google.cloud.vision.v1.BatchAnnotateImagesResponse;
+import com.google.cloud.vision.v1.Block;
+import com.google.cloud.vision.v1.BoundingPoly;
 import com.google.cloud.vision.v1.Feature;
 import com.google.cloud.vision.v1.Image;
 import com.google.cloud.vision.v1.ImageAnnotatorClient;
+import com.google.cloud.vision.v1.Page;
+import com.google.cloud.vision.v1.Paragraph;
+import com.google.cloud.vision.v1.Symbol;
+import com.google.cloud.vision.v1.Vertex;
+import com.google.cloud.vision.v1.Word;
 import com.google.protobuf.ByteString;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
@@ -15,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -70,22 +77,55 @@ public class CloudVisionOcrService implements OcrService {
             throw new IllegalStateException("Cloud Vision OCR failed: " + message);
         }
 
-        List<String> lines = extractLines(response);
+        List<OcrLine> lines = extractLines(response);
         Double confidence = extractOverallConfidence(response);
         Optional<String> contactName = ContactNameExtractor.extractFromHeader(response);
 
         return new OcrResult(lines, confidence, contactName.orElse(null));
     }
 
-    private static List<String> extractLines(AnnotateImageResponse response) {
-        String text = response.getFullTextAnnotation().getText();
-        if (text.isEmpty()) {
-            return List.of();
+    /**
+     * One {@link OcrLine} per Vision block — chat-message bubbles produce
+     * one block each in DOCUMENT_TEXT_DETECTION mode, which is the natural
+     * unit for the speaker-attribution X-coordinate heuristic.
+     */
+    private static List<OcrLine> extractLines(AnnotateImageResponse response) {
+        if (response.getFullTextAnnotation().getPagesCount() == 0) return List.of();
+        List<OcrLine> out = new ArrayList<>();
+        for (Page page : response.getFullTextAnnotation().getPagesList()) {
+            for (Block block : page.getBlocksList()) {
+                String text = concatBlockText(block).trim();
+                if (text.isEmpty()) continue;
+                out.add(new OcrLine(text, boundsOf(block.getBoundingBox())));
+            }
         }
-        return Arrays.stream(text.split("\\R"))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .toList();
+        return out;
+    }
+
+    private static String concatBlockText(Block block) {
+        StringBuilder sb = new StringBuilder();
+        for (Paragraph para : block.getParagraphsList()) {
+            for (Word word : para.getWordsList()) {
+                for (Symbol sym : word.getSymbolsList()) {
+                    sb.append(sym.getText());
+                }
+                sb.append(' ');
+            }
+        }
+        return sb.toString();
+    }
+
+    private static OcrLine.BoundingBox boundsOf(BoundingPoly poly) {
+        if (poly.getVerticesCount() == 0) return null;
+        int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE;
+        for (Vertex v : poly.getVerticesList()) {
+            minX = Math.min(minX, v.getX());
+            minY = Math.min(minY, v.getY());
+            maxX = Math.max(maxX, v.getX());
+            maxY = Math.max(maxY, v.getY());
+        }
+        return new OcrLine.BoundingBox(minX, minY, maxX, maxY);
     }
 
     private static Double extractOverallConfidence(AnnotateImageResponse response) {

@@ -51,8 +51,9 @@ class CloudVisionOcrServiceTest {
     void downloads_bytes_then_calls_vision_with_document_text_detection_feature() {
         when(storage.download("conv/abc/screenshot.png")).thenReturn(new byte[]{1, 2, 3});
         when(client.batchAnnotateImages(anyList())).thenReturn(responseWith(
-                "Priya Sharma\nHey are you free tonight?\nYeah! 7pm",
-                "Priya Sharma"));
+                blockAt(50, 0, 200, "Priya Sharma"),                   // header
+                blockAt(200, 40, 480, "Hey are you free tonight?"),    // left bubble (THEM)
+                blockAt(280, 560, 1000, "Yeah 7pm")));                  // right bubble (ME)
 
         OcrResult result = service.read("conv/abc/screenshot.png");
 
@@ -65,10 +66,15 @@ class CloudVisionOcrServiceTest {
         assertThat(sent.get(0).getFeatures(0).getType().name()).isEqualTo("DOCUMENT_TEXT_DETECTION");
         assertThat(sent.get(0).getImage().getContent().toByteArray()).containsExactly(1, 2, 3);
 
-        assertThat(result.lines()).containsExactly(
+        assertThat(result.lines()).extracting(OcrLine::text).containsExactly(
                 "Priya Sharma",
                 "Hey are you free tonight?",
-                "Yeah! 7pm");
+                "Yeah 7pm");
+        // Each line carries the bounding box from the corresponding Vision block.
+        assertThat(result.lines()).allSatisfy(l -> assertThat(l.bounds()).isNotNull());
+        // Specifically, the right-side bubble's center is to the right of the left-side bubble's.
+        assertThat(result.lines().get(2).bounds().centerX())
+                .isGreaterThan(result.lines().get(1).bounds().centerX());
         assertThat(result.contactNameHint()).isEqualTo("Priya Sharma");
     }
 
@@ -76,8 +82,8 @@ class CloudVisionOcrServiceTest {
     void filters_phone_number_in_header() {
         when(storage.download(any())).thenReturn(new byte[]{1});
         when(client.batchAnnotateImages(anyList())).thenReturn(responseWith(
-                "+91 98765 43210\nMessage body",
-                "+91 98765 43210"));
+                blockAt(50, 0, 200, "+91 98765 43210"),       // header is a phone
+                blockAt(400, 40, 480, "Message body")));
 
         OcrResult result = service.read("anything");
 
@@ -117,32 +123,29 @@ class CloudVisionOcrServiceTest {
 
     private static <T> T any() { return org.mockito.ArgumentMatchers.any(); }
 
-    private static BatchAnnotateImagesResponse responseWith(String fullText, String headerText) {
+    private static BatchAnnotateImagesResponse responseWith(Block... blocks) {
         Page.Builder page = Page.newBuilder().setConfidence(0.95f);
-        // Header block (topmost)
-        page.addBlocks(blockAt(50, headerText));
-        // A body block lower down — used to make sure the extractor picks the top.
-        page.addBlocks(blockAt(800, "irrelevant body"));
+        for (Block b : blocks) page.addBlocks(b);
         AnnotateImageResponse response = AnnotateImageResponse.newBuilder()
                 .setFullTextAnnotation(TextAnnotation.newBuilder()
-                        .setText(fullText)
                         .addPages(page)
                         .build())
                 .build();
         return BatchAnnotateImagesResponse.newBuilder().addResponses(response).build();
     }
 
-    private static Block blockAt(int top, String text) {
+    /** @param top vertical position; @param leftX/rightX horizontal extent of the bubble. */
+    private static Block blockAt(int top, int leftX, int rightX, String text) {
         Word.Builder word = Word.newBuilder();
         for (char c : text.toCharArray()) {
             word.addSymbols(Symbol.newBuilder().setText(String.valueOf(c)).build());
         }
         return Block.newBuilder()
                 .setBoundingBox(BoundingPoly.newBuilder()
-                        .addVertices(Vertex.newBuilder().setX(0).setY(top).build())
-                        .addVertices(Vertex.newBuilder().setX(100).setY(top).build())
-                        .addVertices(Vertex.newBuilder().setX(100).setY(top + 30).build())
-                        .addVertices(Vertex.newBuilder().setX(0).setY(top + 30).build())
+                        .addVertices(Vertex.newBuilder().setX(leftX).setY(top).build())
+                        .addVertices(Vertex.newBuilder().setX(rightX).setY(top).build())
+                        .addVertices(Vertex.newBuilder().setX(rightX).setY(top + 30).build())
+                        .addVertices(Vertex.newBuilder().setX(leftX).setY(top + 30).build())
                         .build())
                 .addParagraphs(Paragraph.newBuilder().addWords(word).build())
                 .build();
