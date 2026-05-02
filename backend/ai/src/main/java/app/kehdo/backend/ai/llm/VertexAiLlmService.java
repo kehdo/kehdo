@@ -9,7 +9,7 @@ import io.github.resilience4j.retry.annotation.Retry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -17,17 +17,20 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 /**
- * Real LLM adapter backed by Vertex AI Gemini 2.0 Flash. Activated by
- * {@code kehdo.ai.llm.provider=gcp}; otherwise {@link StubLlmService}
- * runs.
+ * Real LLM adapter backed by Vertex AI Gemini 2.0 Flash. Active when
+ * the LLM provider is either {@code gcp} (Vertex-only) or
+ * {@code failover} (Vertex primary + OpenAI fallback). Otherwise
+ * {@link StubLlmService} runs.
  *
  * <p>Wrapped by Resilience4j's {@code llm-vertex} circuit breaker per
- * {@code backend/CLAUDE.md} AI rule 4. The OpenAI failover (Phase 4 PR
- * 8) will compose this service via a higher-level {@code FailoverLlmService}
- * that catches breaker-open / IO failures and falls through.</p>
+ * {@code backend/CLAUDE.md} AI rule 4. {@link FailoverLlmService}
+ * catches {@link io.github.resilience4j.circuitbreaker.CallNotPermittedException}
+ * and {@link VertexAiResponseException} from this service and falls
+ * through to the OpenAI adapter.</p>
  */
 @Service
-@ConditionalOnProperty(name = "kehdo.ai.llm.provider", havingValue = "gcp")
+@ConditionalOnExpression(
+        "'${kehdo.ai.llm.provider:stub}' == 'gcp' || '${kehdo.ai.llm.provider:stub}' == 'failover'")
 public class VertexAiLlmService implements LlmService {
 
     private static final Logger log = LoggerFactory.getLogger(VertexAiLlmService.class);
