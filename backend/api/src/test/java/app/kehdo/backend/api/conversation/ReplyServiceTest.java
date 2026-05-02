@@ -8,6 +8,12 @@ import app.kehdo.backend.conversation.Conversation;
 import app.kehdo.backend.conversation.ConversationRepository;
 import app.kehdo.backend.conversation.Reply;
 import app.kehdo.backend.conversation.ReplyRepository;
+import app.kehdo.backend.user.QuotaExceededException;
+import app.kehdo.backend.user.QuotaService;
+import app.kehdo.backend.user.User;
+import app.kehdo.backend.user.UserPlan;
+import app.kehdo.backend.user.UserRepository;
+import app.kehdo.backend.user.UserUsage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -20,7 +26,10 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class ReplyServiceTest {
@@ -30,6 +39,8 @@ class ReplyServiceTest {
     private ReplyRepository replyRepository;
     private ConversationRepository conversationRepository;
     private RefineOrchestrator orchestrator;
+    private UserRepository userRepository;
+    private QuotaService quotaService;
     private ReplyService service;
 
     @BeforeEach
@@ -37,10 +48,14 @@ class ReplyServiceTest {
         replyRepository = mock(ReplyRepository.class);
         conversationRepository = mock(ConversationRepository.class);
         orchestrator = mock(RefineOrchestrator.class);
+        userRepository = mock(UserRepository.class);
+        quotaService = mock(QuotaService.class);
         service = new ReplyService(
                 replyRepository,
                 conversationRepository,
                 orchestrator,
+                userRepository,
+                quotaService,
                 Clock.fixed(NOW, ZoneOffset.UTC));
         when(replyRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
     }
@@ -58,6 +73,7 @@ class ReplyServiceTest {
         when(replyRepository.findById(replyId)).thenReturn(Optional.of(original));
         when(conversationRepository.findActiveByIdAndUser(conversationId, userId))
                 .thenReturn(Optional.of(conversation));
+        when(userRepository.findActiveById(userId)).thenReturn(Optional.of(newUser(userId, UserPlan.PRO)));
         when(orchestrator.refine(any())).thenReturn(
                 new RefineOrchestrator.RefineOutput("Got it — 7pm 🙂", "openai/gpt-4o-mini"));
 
@@ -68,6 +84,8 @@ class ReplyServiceTest {
         assertThat(result.toneCode()).isEqualTo("WARM");
         assertThat(result.id()).isNotEqualTo(replyId); // new row
         assertThat(result.rank()).isEqualTo(1);
+        // Quota was charged.
+        verify(quotaService).consumeOrThrow(userId, UserPlan.PRO);
     }
 
     @Test
@@ -85,7 +103,6 @@ class ReplyServiceTest {
     @Test
     void refine_throws_not_found_when_caller_does_not_own_the_conversation() {
         UUID userId = UUID.randomUUID();
-        UUID otherUserId = UUID.randomUUID();
         UUID conversationId = UUID.randomUUID();
         UUID replyId = UUID.randomUUID();
 
@@ -103,6 +120,30 @@ class ReplyServiceTest {
     }
 
     @Test
+    void refine_throws_402_when_quota_exceeded_and_skips_orchestrator() {
+        UUID userId = UUID.randomUUID();
+        UUID conversationId = UUID.randomUUID();
+        UUID replyId = UUID.randomUUID();
+
+        Reply original = new Reply(
+                replyId, conversationId, 1, "x", "WARM", "model", NOW);
+        Conversation conversation = new Conversation(conversationId, userId, NOW);
+        when(replyRepository.findById(replyId)).thenReturn(Optional.of(original));
+        when(conversationRepository.findActiveByIdAndUser(conversationId, userId))
+                .thenReturn(Optional.of(conversation));
+        when(userRepository.findActiveById(userId)).thenReturn(Optional.of(newUser(userId, UserPlan.STARTER)));
+        doThrow(new QuotaExceededException(new UserUsage(5, 5, NOW.plusSeconds(3600))))
+                .when(quotaService).consumeOrThrow(userId, UserPlan.STARTER);
+
+        assertThatThrownBy(() -> service.refine(userId, replyId, "shorter"))
+                .isInstanceOf(ApiException.class)
+                .extracting("code", "httpStatus")
+                .containsExactly("DAILY_QUOTA_EXCEEDED", 402);
+
+        verify(orchestrator, never()).refine(any());
+    }
+
+    @Test
     void refine_throws_content_blocked_when_orchestrator_blocks() {
         UUID userId = UUID.randomUUID();
         UUID conversationId = UUID.randomUUID();
@@ -114,11 +155,16 @@ class ReplyServiceTest {
         when(replyRepository.findById(replyId)).thenReturn(Optional.of(original));
         when(conversationRepository.findActiveByIdAndUser(conversationId, userId))
                 .thenReturn(Optional.of(conversation));
+        when(userRepository.findActiveById(userId)).thenReturn(Optional.of(newUser(userId, UserPlan.PRO)));
         when(orchestrator.refine(any())).thenThrow(new ContentBlockedException());
 
         assertThatThrownBy(() -> service.refine(userId, replyId, "shorter"))
                 .isInstanceOf(ApiException.class)
                 .extracting("code", "httpStatus")
                 .containsExactly("CONTENT_BLOCKED", 422);
+    }
+
+    private static User newUser(UUID id, UserPlan plan) {
+        return new User(id, "u@example.com", "$2a$12$hash", "U", plan, NOW);
     }
 }
