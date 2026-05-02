@@ -46,6 +46,14 @@ interface ConversationRepository {
     /** Reactive list of recent conversations for the History screen. */
     fun observeRecent(limit: Int = 50): Flow<List<Conversation>>
 
-    /** Hard-delete a single conversation (user-initiated forget). */
+    /**
+     * One page of history backed by `GET /v1/conversations?limit=&cursor=`.
+     * Pass [cursor] = null on the first call; use the returned
+     * [HistoryPage.nextCursor] to fetch the next page (null on the last
+     * page). Soft-deleted conversations are filtered out by the backend.
+     */
+    suspend fun getHistoryPage(limit: Int = 20, cursor: String? = null): Outcome<HistoryPage>
+
+    /** Soft-delete a single conversation (user-initiated forget). */
     suspend fun deleteConversation(conversationId: String): Outcome<Unit>
 }

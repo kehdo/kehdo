@@ -4,6 +4,7 @@ import app.kehdo.core.common.Outcome
 import app.kehdo.domain.conversation.Conversation
 import app.kehdo.domain.conversation.ConversationRepository
 import app.kehdo.domain.conversation.ConversationStatus
+import app.kehdo.domain.conversation.HistoryPage
 import app.kehdo.domain.conversation.Mode
 import app.kehdo.domain.conversation.Reply
 import app.kehdo.domain.conversation.Tone
@@ -118,6 +119,18 @@ class FakeConversationRepository @Inject constructor() : ConversationRepository 
                 .sortedByDescending { it.createdAt }
                 .take(limit)
         }
+
+    override suspend fun getHistoryPage(limit: Int, cursor: String?): Outcome<HistoryPage> {
+        delay(120) // simulate a network round-trip
+        val sorted = _conversations.value.values
+            .sortedByDescending { it.createdAt }
+        // Cursor is just an integer offset string in the Fake — opaque to
+        // the caller, just like the real backend's base64 cursor would be.
+        val offset = cursor?.toIntOrNull() ?: 0
+        val slice = sorted.drop(offset).take(limit)
+        val nextCursor = if (offset + slice.size < sorted.size) (offset + slice.size).toString() else null
+        return Outcome.success(HistoryPage(items = slice, nextCursor = nextCursor))
+    }
 
     override suspend fun deleteConversation(conversationId: String): Outcome<Unit> {
         _conversations.update { it - conversationId }

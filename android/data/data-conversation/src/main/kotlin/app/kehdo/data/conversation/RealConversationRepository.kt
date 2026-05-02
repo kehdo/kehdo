@@ -11,6 +11,7 @@ import app.kehdo.data.conversation.mapper.ConversationMappers
 import app.kehdo.domain.conversation.Conversation
 import app.kehdo.domain.conversation.ConversationRepository
 import app.kehdo.domain.conversation.ConversationStatus
+import app.kehdo.domain.conversation.HistoryPage
 import app.kehdo.domain.conversation.Tone
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
@@ -45,8 +46,11 @@ import javax.inject.Singleton
  * for now — the backend doesn't yet expose interaction-signal endpoints
  * for replies; ADR 0006 schedules that with the data flywheel.
  *
- * History (`observeRecent`) and `deleteConversation` are best-effort
- * local-only until `GET /conversations` is wired through.
+ * History (`getHistoryPage`) is backed by `GET /conversations` with
+ * cursor-based pagination; `deleteConversation` calls `DELETE
+ * /conversations/{id}` (soft delete, hard-removed by the nightly
+ * cleanup job after 30 days). Local cache is updated on success so the
+ * Reply screen's Flow observers see the eviction immediately.
  */
 @Singleton
 class RealConversationRepository @Inject constructor(
@@ -142,12 +146,34 @@ class RealConversationRepository @Inject constructor(
             snapshot.values.sortedByDescending { it.createdAt }.take(limit)
         }
 
+    override suspend fun getHistoryPage(limit: Int, cursor: String?): Outcome<HistoryPage> = runNetwork {
+        val page = ConversationMappers.fromHistoryPage(api.listConversations(limit, cursor))
+        // Hydrate the local cache so the Reply screen's observe() Flow
+        // can pick up rows the user opens from the history list. We only
+        // overwrite cache entries we don't already have replies for —
+        // the history endpoint doesn't return replies, so blindly
+        // overwriting would erase locally-cached generation results.
+        _conversations.update { snapshot ->
+            val merged = snapshot.toMutableMap()
+            page.items.forEach { conv ->
+                if (snapshot[conv.id]?.replies?.isEmpty() != false) {
+                    merged[conv.id] = conv
+                }
+            }
+            merged
+        }
+        page
+    }
+
     override suspend fun deleteConversation(conversationId: String): Outcome<Unit> {
-        // Local cache evict only — the backend's DELETE /conversations/{id}
-        // ships when the History feature lands. Keeping this method
-        // local-functional means "swipe to forget" works in the meantime.
-        _conversations.update { it - conversationId }
-        return Outcome.success(Unit)
+        val result = runNetwork {
+            api.deleteConversation(conversationId)
+            Unit
+        }
+        if (result is Outcome.Success) {
+            _conversations.update { it - conversationId }
+        }
+        return result
     }
 
     // ---- helpers ----------------------------------------------------------

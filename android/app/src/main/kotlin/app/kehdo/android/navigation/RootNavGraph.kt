@@ -11,6 +11,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import app.kehdo.feature.auth.AuthRoute
 import app.kehdo.feature.auth.authGraph
+import app.kehdo.feature.history.HistoryRoute
+import app.kehdo.feature.history.historyGraph
 import app.kehdo.feature.home.HomeRoute
 import app.kehdo.feature.home.homeGraph
 import app.kehdo.feature.onboarding.OnboardingRoute
@@ -78,7 +80,16 @@ fun RootNavGraph(
         homeGraph(
             onStartNewReply = {
                 navController.navigate(UploadRoute.GRAPH)
+            },
+            onOpenHistory = {
+                navController.navigate(HistoryRoute.GRAPH)
             }
+        )
+        historyGraph(
+            onOpenConversation = { conversationId ->
+                navController.navigate(ReplyRoute.reply(conversationId))
+            },
+            onBack = { navController.popBackStack() }
         )
         uploadGraph(
             onConversationReady = { conversationId ->
