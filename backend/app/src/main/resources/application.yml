@@ -65,12 +65,22 @@ kehdo:
     private-key-path: ${KEHDO_JWT_PRIVATE_KEY_PATH:classpath:keys/jwt-private.pem}
 
   storage:
+    # Object-storage backend. "stub" returns a canned 1×1 PNG on download
+    # and a non-routable presigned URL — fine for local dev without
+    # MinIO. Flip to "s3" to use AWS S3 / MinIO / Cloudflare R2.
+    provider: ${KEHDO_STORAGE_PROVIDER:stub}        # stub | s3
     s3:
+      # Set endpoint to the MinIO / R2 host explicitly; leave blank for
+      # real AWS S3 (the SDK derives it from region).
       endpoint: ${KEHDO_S3_ENDPOINT:http://localhost:9000}
+      region: ${KEHDO_S3_REGION:us-east-1}
       bucket: ${KEHDO_S3_BUCKET:kehdo-screenshots-dev}
       access-key: ${KEHDO_S3_ACCESS_KEY:minioadmin}
       secret-key: ${KEHDO_S3_SECRET_KEY:minioadmin}
       presigned-url-ttl-minutes: 5
+      # MinIO requires path-style (host/bucket/key); AWS S3 uses
+      # virtual-hosted-style by default.
+      force-path-style: ${KEHDO_S3_FORCE_PATH_STYLE:true}
 
   rate-limit:
     free-daily-replies: 5
