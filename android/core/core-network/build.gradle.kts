@@ -12,8 +12,14 @@ android {
     }
 
     defaultConfig {
-        // Debug → emulator's host loopback (local backend on :8080).
-        buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:8080/v1/\"")
+        // Debug API base URL — defaults to the Fly.io staging deployment so
+        // every dev build talks to a real backend without anyone having to
+        // run Spring Boot locally. Override with -Pkehdo.apiBaseUrl=...
+        // to point at the local backend (http://10.0.2.2:8080/v1/) or any
+        // other env. Trailing slash required by Retrofit.
+        val debugApiBaseUrl = (project.findProperty("kehdo.apiBaseUrl") as? String)
+            ?: "https://api.staging.kehdo.app/v1/"
+        buildConfigField("String", "API_BASE_URL", "\"$debugApiBaseUrl\"")
     }
 
     buildTypes {

@@ -99,14 +99,19 @@ for the canonical contract.
 ### API base URL — per build variant
 
 ```kotlin
-// :app/build.gradle.kts buildTypes:
-// debug   → http://10.0.2.2:8080/v1   (Android emulator → host machine localhost)
-// staging → https://api.staging.kehdo.app/v1   (Phase 2.5 — when AWS deploys land)
-// release → https://api.kehdo.app/v1
+// :core:network/build.gradle.kts:
+// debug   → https://api.staging.kehdo.app/v1   (Phase 5 default; Fly.io staging)
+// release → https://api.kehdo.app/v1            (production; not deployed yet)
 ```
 
+Override the debug URL at build time with `-Pkehdo.apiBaseUrl=...` —
+typical overrides:
+- `http://10.0.2.2:8080/v1/` for emulator → local backend
+- `http://localhost:8080/v1/` for a physical device with `adb reverse`
+
 Surface this via `BuildConfig.API_BASE_URL` so `:core:network` reads it
-without each module hardcoding URLs.
+without each module hardcoding URLs. The Fake-vs-Real repository switch
+is independent of the URL — see `kehdo.useFakeData` in `gradle.properties`.
 
 ### Auth token storage
 
