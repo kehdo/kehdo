@@ -58,7 +58,14 @@ primary_region = "bom"  # Mumbai — closest to the Indian launch market
 
 [deploy]
   strategy = "rolling"
-  release_command = "echo 'Flyway runs at app startup — no separate release step needed'"
+  # NO release_command on purpose. Fly's release_command runs the
+  # configured value APPENDED to the image's ENTRYPOINT — it doesn't
+  # replace it. Our ENTRYPOINT is `java -jar /app/kehdo.jar`, so any
+  # release_command turns into `java -jar /app/kehdo.jar <args>`,
+  # which boots Spring Boot and either (a) crashes the release machine
+  # if config is wrong, or (b) hangs forever because Spring Boot is a
+  # long-running server. Flyway already runs at app startup, so a
+  # dedicated migration machine isn't useful here.
 
 [[mounts]]
   # Persistent volume for any disk-cached artifacts (e.g. local screenshot

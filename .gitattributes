@@ -1,0 +1,29 @@
+# kehdo line-ending policy
+#
+# Default: let git auto-detect text vs binary, normalise to LF on commit.
+# This keeps the repo's line endings stable regardless of what
+# core.autocrlf each developer has set locally.
+* text=auto eol=lf
+
+# Windows-only files keep CRLF so they double-click correctly on Windows.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Shell scripts and gradlew MUST stay LF — they get exec'd inside the
+# Docker build container (Alpine Linux), where the sh interpreter chokes
+# on CRLF shebangs with a misleading "not found" error.
+gradlew text eol=lf
+*.sh text eol=lf
+
+# Binary or otherwise-untouchable file types — keep raw bytes.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.jar binary
+*.keystore binary
