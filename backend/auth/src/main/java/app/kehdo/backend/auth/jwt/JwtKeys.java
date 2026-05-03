@@ -55,6 +55,25 @@ public final class JwtKeys {
     }
 
     public static JwtKeys load(JwtProperties props) {
+        // 1. Inline PEM wins (Fly.io secrets, AWS Secrets Manager, etc.).
+        //    Hosted environments shouldn't have to mount files just to
+        //    pass a few KB of key material.
+        if (hasText(props.publicKeyPem()) && hasText(props.privateKeyPem())) {
+            try {
+                PublicKey publicKey = parsePublicKey(props.publicKeyPem());
+                PrivateKey privateKey = parsePrivateKey(props.privateKeyPem());
+                log.info("JWT keys loaded from inline PEM (env-var-supplied)");
+                return new JwtKeys(privateKey, publicKey, false);
+            } catch (Exception e) {
+                throw new IllegalStateException(
+                        "Failed to parse inline JWT PEM keys — check the format of "
+                                + "KEHDO_JWT_PUBLIC_KEY_PEM and KEHDO_JWT_PRIVATE_KEY_PEM. "
+                                + "Both must be standard PEM (BEGIN PUBLIC KEY / BEGIN PRIVATE KEY).",
+                        e);
+            }
+        }
+
+        // 2. Resource-based load — local dev with PEM files on disk or classpath.
         Resource publicResource = resolveIfExists(props.publicKeyPath());
         Resource privateResource = resolveIfExists(props.privateKeyPath());
 
@@ -70,13 +89,19 @@ public final class JwtKeys {
             }
         }
 
+        // 3. Ephemeral fallback — local-dev convenience, tokens invalidate on restart.
         log.warn(
-                "JWT key paths not found ({} / {}); generating an EPHEMERAL RSA-2048 keypair "
-                        + "for this JVM. Tokens will be invalid after restart. Configure "
-                        + "kehdo.jwt.{public,private}-key-path before deploying anywhere.",
+                "JWT key paths not found ({} / {}) and no inline PEM supplied; generating "
+                        + "an EPHEMERAL RSA-2048 keypair for this JVM. Tokens will be invalid "
+                        + "after restart. Configure kehdo.jwt.{public,private}-key-pem (env "
+                        + "var) or kehdo.jwt.{public,private}-key-path before deploying anywhere.",
                 props.publicKeyPath(), props.privateKeyPath());
         KeyPair pair = generateEphemeral();
         return new JwtKeys(pair.getPrivate(), pair.getPublic(), true);
+    }
+
+    private static boolean hasText(String s) {
+        return s != null && !s.isBlank();
     }
 
     public PrivateKey privateKey() { return privateKey; }

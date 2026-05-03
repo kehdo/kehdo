@@ -1,0 +1,102 @@
+# ============================================================
+# kehdo backend — staging profile (api.staging.kehdo.app on Fly.io)
+# ============================================================
+# Activated by SPRING_PROFILES_ACTIVE=staging (set in fly.staging.toml).
+# This file holds staging-specific overrides; everything else inherits
+# from application.yml.
+#
+# All secret values come from Fly.io secrets via env vars — see
+# /docs/STAGING_DEPLOYMENT.md for the full secret list and setup steps.
+# Nothing sensitive lives in this file.
+# ============================================================
+
+spring:
+  datasource:
+    # Fly Postgres injects DATABASE_URL in libpq format; Spring needs JDBC.
+    # The fly.staging.toml release command (or the Dockerfile entrypoint)
+    # converts postgres://... -> jdbc:postgresql://... — see deployment runbook.
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    hikari:
+      maximum-pool-size: 10   # Fly free tier limits us; 10 is plenty for staging
+      minimum-idle: 2
+
+  data:
+    redis:
+      # Upstash Redis free tier — full URL with auth token in the format
+      # redis://default:<password>@<host>:<port>
+      url: ${REDIS_URL}
+
+  jpa:
+    properties:
+      hibernate:
+        format_sql: false
+
+management:
+  endpoint:
+    health:
+      # Show DB / Redis component status on staging so failures are visible
+      # in `fly logs`. Stays off in production.
+      show-details: when-authorized
+
+# kehdo overrides — flip every adapter from stub to real on staging.
+# These default to "stub" in application.yml so local dev / CI doesn't
+# accidentally hit a cloud API.
+kehdo:
+  jwt:
+    # Inline PEM via Fly secrets — see KEHDO_JWT_*_PEM in the runbook.
+    # The shared application.yml already wires public-key-pem and
+    # private-key-pem to these env vars; this is just here as a marker
+    # that staging MUST have them set (no ephemeral fallback in prod).
+    public-key-pem: ${KEHDO_JWT_PUBLIC_KEY_PEM}
+    private-key-pem: ${KEHDO_JWT_PRIVATE_KEY_PEM}
+
+  storage:
+    provider: s3
+    s3:
+      # Real AWS S3 in staging — bucket created via the runbook step. We
+      # use AWS rather than Cloudflare R2 / MinIO here because the SDK is
+      # already in the dependency tree and IAM-based auth is turnkey.
+      endpoint: ""              # blank => SDK derives from region (real AWS)
+      region: ${KEHDO_S3_REGION:ap-south-1}
+      bucket: ${KEHDO_S3_BUCKET}
+      access-key: ${KEHDO_S3_ACCESS_KEY}
+      secret-key: ${KEHDO_S3_SECRET_KEY}
+      presigned-url-ttl-minutes: 5
+      # Real S3 uses virtual-hosted-style; force-path-style is for MinIO.
+      force-path-style: false
+
+  ai:
+    ocr:
+      provider: gcp
+    llm:
+      provider: failover        # Vertex primary + OpenAI fallback
+    speaker:
+      provider: stub            # Heuristic still, full LLM-backed ships later
+    moderation:
+      provider: openai
+    vertex:
+      project-id: ${VERTEX_PROJECT_ID}
+      location: ${VERTEX_LOCATION:asia-south1}
+      model: ${VERTEX_MODEL:gemini-2.0-flash}
+      # When the GOOGLE_APPLICATION_CREDENTIALS env var points at a JSON
+      # file mounted from secrets, the Google SDK picks it up automatically.
+      credentials-path: ${GOOGLE_APPLICATION_CREDENTIALS:}
+    openai:
+      api-key: ${OPENAI_API_KEY}
+      model: ${OPENAI_MODEL:gpt-4o-mini}
+      moderation-model: ${OPENAI_MODERATION_MODEL:omni-moderation-latest}
+    google-vision:
+      credentials-path: ${GOOGLE_APPLICATION_CREDENTIALS:}
+
+logging:
+  level:
+    root: INFO
+    app.kehdo: INFO       # Down from DEBUG — staging logs ship to Fly's tail
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+  pattern:
+    # Same pattern as local but with the traceId always included so log
+    # correlation across the OCR -> LLM pipeline is grep-able in `fly logs`.
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] [trace=%X{traceId:-}] %logger{40} - %msg%n'

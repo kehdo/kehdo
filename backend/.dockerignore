@@ -1,0 +1,27 @@
+# Build outputs
+**/build/
+**/.gradle/
+**/out/
+
+# IDE / editor
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+
+# Tests + dev artifacts
+**/test-results/
+**/coverage/
+hs_err_pid*.log
+
+# Fly.io / local secrets — must NEVER ship in image layers
+*.pem
+*.key
+.env
+.env.*
+!.env.example
+
+# Per-machine
+.DS_Store
+Thumbs.db

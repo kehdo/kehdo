@@ -1,0 +1,70 @@
+# Deploy backend to Fly.io staging on every merge to develop.
+#
+# Prerequisites — set once via the GitHub repo Settings > Secrets:
+#   FLY_API_TOKEN  — generate with `fly auth token` after `fly auth login`.
+#                    Scoped to the kehdo-backend-staging app only.
+#
+# All other secrets (DB url, Redis url, JWT PEMs, OpenAI key, GCP creds,
+# S3 creds) live in Fly.io itself, set with `fly secrets set --app
+# kehdo-backend-staging KEY=value`. They never appear in this workflow,
+# the repo, or GitHub Actions logs. See /docs/STAGING_DEPLOYMENT.md.
+
+name: Deploy backend (staging)
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-staging.yml'
+  workflow_dispatch:        # manual trigger from the Actions tab
+
+concurrency:
+  # Cancel any earlier deploy that hasn't finished — we always want the
+  # newest commit to win, and Fly's deploy is idempotent.
+  group: deploy-staging
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy to Fly.io
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy
+        working-directory: backend
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          flyctl deploy \
+            --config fly.staging.toml \
+            --remote-only \
+            --strategy rolling \
+            --wait-timeout 600
+
+      - name: Verify health endpoint
+        # If /health returns 200 we trust the rest of the stack came up.
+        # Flyway runs on app start, so a successful health check also
+        # confirms migrations applied cleanly.
+        run: |
+          for i in 1 2 3 4 5; do
+            sleep 10
+            code=$(curl -s -o /dev/null -w "%{http_code}" \
+              https://api.staging.kehdo.app/v1/health || echo "000")
+            echo "attempt $i -> HTTP $code"
+            if [ "$code" = "200" ]; then
+              echo "Staging is healthy."
+              exit 0
+            fi
+          done
+          echo "Staging health check failed after 5 attempts."
+          exit 1

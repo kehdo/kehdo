@@ -54,7 +54,7 @@ class AuthServiceTest {
         userRepository = mock(UserRepository.class);
         sessionRepository = mock(SessionRepository.class);
         passwordEncoder = new BCryptPasswordEncoder(4); // low cost for tests
-        jwtProperties = new JwtProperties("https://api.kehdo.test", 300, 30, "", "");
+        jwtProperties = new JwtProperties("https://api.kehdo.test", 300, 30, "", "", null, null);
         JwtKeys keys = JwtKeys.load(jwtProperties);
         jwtService = new JwtService(jwtProperties, keys, FIXED_CLOCK);
 

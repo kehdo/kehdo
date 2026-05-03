@@ -15,12 +15,22 @@ import java.time.Duration;
  *     refresh-token-ttl-days: 30
  *     public-key-path: classpath:keys/jwt-public.pem
  *     private-key-path: classpath:keys/jwt-private.pem
+ *     # OR (preferred for hosted environments — inline PEM via secrets):
+ *     public-key-pem: ${KEHDO_JWT_PUBLIC_KEY_PEM:}
+ *     private-key-pem: ${KEHDO_JWT_PRIVATE_KEY_PEM:}
  * }</pre>
  *
- * <p>If neither key path resolves to an existing resource at startup, an
- * ephemeral RS256 keypair is generated in memory (suitable for local dev
- * and integration tests; never use in production — tokens become invalid
- * the moment the JVM restarts).</p>
+ * <p>Resolution order at startup (in {@link JwtKeys#load}):</p>
+ * <ol>
+ *   <li>Inline PEM via {@link #publicKeyPem} / {@link #privateKeyPem} —
+ *       the path used by Fly.io / AWS / any hosted environment that
+ *       injects secrets as env vars. No filesystem touched.</li>
+ *   <li>Filesystem / classpath PEM via {@link #publicKeyPath} /
+ *       {@link #privateKeyPath} — the local-dev path with PEM files
+ *       checked into the repo.</li>
+ *   <li>Ephemeral RSA-2048 keypair generated in memory — only safe for
+ *       local dev and tests; tokens become invalid on JVM restart.</li>
+ * </ol>
  */
 @ConfigurationProperties(prefix = "kehdo.jwt")
 public record JwtProperties(
@@ -28,7 +38,9 @@ public record JwtProperties(
         long accessTokenTtlSeconds,
         long refreshTokenTtlDays,
         String publicKeyPath,
-        String privateKeyPath) {
+        String privateKeyPath,
+        String publicKeyPem,
+        String privateKeyPem) {
 
     public Duration accessTokenTtl() {
         return Duration.ofSeconds(accessTokenTtlSeconds);
