@@ -33,6 +33,12 @@ data class ParsedMessageDto(
     val confidence: Double? = null
 )
 
+@Serializable
+data class ConversationPageDto(
+    val items: List<ConversationDto>,
+    val nextCursor: String? = null
+)
+
 // ---- /conversations/{id}/generate ----------------------------------------
 
 @Serializable

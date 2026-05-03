@@ -1,14 +1,17 @@
 package app.kehdo.core.network.api
 
 import app.kehdo.core.network.api.dto.ConversationDto
+import app.kehdo.core.network.api.dto.ConversationPageDto
 import app.kehdo.core.network.api.dto.CreateConversationResponseDto
 import app.kehdo.core.network.api.dto.GenerateRequestDto
 import app.kehdo.core.network.api.dto.GenerateResponseDto
 import app.kehdo.core.network.api.dto.ToneDto
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 /**
  * Retrofit binding for the conversation + reply + tone + usage endpoints
@@ -47,6 +50,21 @@ interface ConversationApi {
     /** Fetch a single conversation by id (for refresh / deep link). */
     @GET("conversations/{id}")
     suspend fun getConversation(@Path("id") id: String): ConversationDto
+
+    /**
+     * Paginated history list. {@code cursor} is opaque base64 returned by
+     * the previous page's {@code nextCursor}; pass null on the first call.
+     * Last page returns {@code nextCursor=null}.
+     */
+    @GET("conversations")
+    suspend fun listConversations(
+        @Query("limit") limit: Int = 20,
+        @Query("cursor") cursor: String? = null
+    ): ConversationPageDto
+
+    /** Soft-delete a conversation. Backend hard-deletes after 30 days. */
+    @DELETE("conversations/{id}")
+    suspend fun deleteConversation(@Path("id") id: String)
 
     /** 18-tone catalog with the free/pro split flagged on each entry. */
     @GET("tones")

@@ -1,10 +1,12 @@
 package app.kehdo.data.conversation.mapper
 
 import app.kehdo.core.network.api.dto.ConversationDto
+import app.kehdo.core.network.api.dto.ConversationPageDto
 import app.kehdo.core.network.api.dto.GenerateResponseDto
 import app.kehdo.core.network.api.dto.ReplyDto
 import app.kehdo.core.network.api.dto.ToneDto
 import app.kehdo.domain.conversation.Conversation
+import app.kehdo.domain.conversation.HistoryPage
 import app.kehdo.domain.conversation.ConversationStatus
 import app.kehdo.domain.conversation.Mode
 import app.kehdo.domain.conversation.Reply
@@ -45,6 +47,12 @@ internal object ConversationMappers {
             updatedAt = now
         )
     }
+
+    /** Map [ConversationPageDto] from `GET /conversations` to a domain page. */
+    fun fromHistoryPage(dto: ConversationPageDto): HistoryPage = HistoryPage(
+        items = dto.items.map(::fromConversation),
+        nextCursor = dto.nextCursor
+    )
 
     /** Map [ConversationDto] from `GET /conversations/{id}` to the domain. */
     fun fromConversation(dto: ConversationDto): Conversation {
