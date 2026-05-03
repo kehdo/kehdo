@@ -17,6 +17,8 @@ import app.kehdo.feature.home.HomeRoute
 import app.kehdo.feature.home.homeGraph
 import app.kehdo.feature.onboarding.OnboardingRoute
 import app.kehdo.feature.onboarding.onboardingGraph
+import app.kehdo.feature.profile.ProfileRoute
+import app.kehdo.feature.profile.profileGraph
 import app.kehdo.feature.reply.ReplyRoute
 import app.kehdo.feature.reply.replyGraph
 import app.kehdo.feature.upload.UploadRoute
@@ -83,12 +85,18 @@ fun RootNavGraph(
             },
             onOpenHistory = {
                 navController.navigate(HistoryRoute.GRAPH)
+            },
+            onOpenProfile = {
+                navController.navigate(ProfileRoute.GRAPH)
             }
         )
         historyGraph(
             onOpenConversation = { conversationId ->
                 navController.navigate(ReplyRoute.reply(conversationId))
             },
+            onBack = { navController.popBackStack() }
+        )
+        profileGraph(
             onBack = { navController.popBackStack() }
         )
         uploadGraph(

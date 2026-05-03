@@ -24,6 +24,7 @@ import app.kehdo.core.ui.theme.AuroraColors
 fun HomeScreenRoute(
     onStartNewReply: () -> Unit = {},
     onOpenHistory: () -> Unit = {},
+    onOpenProfile: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -31,6 +32,7 @@ fun HomeScreenRoute(
         state = state,
         onStartNewReply = onStartNewReply,
         onOpenHistory = onOpenHistory,
+        onOpenProfile = onOpenProfile,
         onSignOut = viewModel::onSignOut
     )
 }
@@ -40,6 +42,7 @@ internal fun HomeScreen(
     state: HomeUiState,
     onStartNewReply: () -> Unit,
     onOpenHistory: () -> Unit,
+    onOpenProfile: () -> Unit,
     onSignOut: () -> Unit
 ) {
     Column(
@@ -81,6 +84,12 @@ internal fun HomeScreen(
             AuroraButton(
                 text = "History",
                 onClick = onOpenHistory,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(16.dp))
+            AuroraButton(
+                text = "Profile",
+                onClick = onOpenProfile,
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(16.dp))
