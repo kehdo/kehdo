@@ -30,16 +30,22 @@ WORKDIR /app
 
 # Non-root user for security
 RUN addgroup -S kehdo && adduser -S kehdo -G kehdo
-USER kehdo
 
 COPY --from=builder /build/app/build/libs/*.jar /app/kehdo.jar
+# Bring the entrypoint script in. `chown` must precede the USER switch
+# below so the script ends up owned by kehdo:kehdo and exec-flagged.
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN sed -i 's/\r$//' /app/docker-entrypoint.sh \
+    && chmod +x /app/docker-entrypoint.sh \
+    && chown -R kehdo:kehdo /app
+
+USER kehdo
 
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s \
     CMD wget -q -O - http://localhost:8080/actuator/health || exit 1
 
-ENTRYPOINT ["java", \
-    "-XX:MaxRAMPercentage=75.0", \
-    "-XX:+UseG1GC", \
-    "-XX:+HeapDumpOnOutOfMemoryError", \
-    "-jar", "/app/kehdo.jar"]
+# Entrypoint script materialises the GCP credentials JSON from
+# KEHDO_GCP_CREDENTIALS_B64 to /data, then exec's the JVM with the
+# same flags as before. See docker-entrypoint.sh.
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
