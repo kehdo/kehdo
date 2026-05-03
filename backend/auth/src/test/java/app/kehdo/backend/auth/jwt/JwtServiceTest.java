@@ -24,7 +24,7 @@ class JwtServiceTest {
     @BeforeEach
     void setUp() {
         // Empty paths force ephemeral key generation
-        props = new JwtProperties("https://api.kehdo.test", 300, 30, "", "");
+        props = new JwtProperties("https://api.kehdo.test", 300, 30, "", "", null, null);
         keys = JwtKeys.load(props);
         assertThat(keys.isEphemeral()).isTrue();
     }
@@ -75,11 +75,11 @@ class JwtServiceTest {
     @Test
     void token_with_wrong_issuer_fails_validation() {
         Clock fixed = Clock.fixed(Instant.parse("2026-05-01T00:00:00Z"), ZoneOffset.UTC);
-        JwtProperties propsForIssuerA = new JwtProperties("https://api.kehdo.test", 300, 30, "", "");
+        JwtProperties propsForIssuerA = new JwtProperties("https://api.kehdo.test", 300, 30, "", "", null, null);
         JwtKeys sharedKeys = JwtKeys.load(propsForIssuerA);
         JwtService issuerA = new JwtService(propsForIssuerA, sharedKeys, fixed);
 
-        JwtProperties propsForIssuerB = new JwtProperties("https://different.kehdo.test", 300, 30, "", "");
+        JwtProperties propsForIssuerB = new JwtProperties("https://different.kehdo.test", 300, 30, "", "", null, null);
         JwtService validatorB = new JwtService(propsForIssuerB, sharedKeys, fixed);
 
         String tokenFromA = issuerA.issueAccess(USER_ID, SESSION_ID).token();

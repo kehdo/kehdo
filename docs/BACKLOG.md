@@ -18,7 +18,7 @@ urgent for closed beta; all are in scope before public launch.
 - [ ] **Email confirmation on signup** — verification link sent post-signup; account un-verified state until clicked. Same email-provider blocker.
 - [ ] **Rate limiting on auth endpoints** — Redis token bucket (~5 attempts per IP per 60s on `/auth/login` and `/auth/signup`). Scaffolded in `application.yml` but not wired.
 - [ ] **Account lockout after N failed login attempts** — e.g., 5 wrong passwords in 15 min → 30-min lock. Audit log entry on each lockout.
-- [ ] **Production JWT keypair** — replace the ephemeral RSA-2048 fallback in `JwtKeys.load()` with PEM files mounted from AWS Secrets Manager. Key rotation runbook needed.
+- [ ] **JWT keypair rotation runbook** — Phase 5 ships an inline-PEM-from-secrets path (`JwtKeys` reads `KEHDO_JWT_*_PEM` first, then files, then ephemeral). Production needs a documented rotation drill: generate new pair → set new secret → restart with both old and new public keys trusted briefly → cut over → drop old. Currently the staging key is generated once in `STAGING_DEPLOYMENT.md` step 1 and never rotated.
 
 ### Nice-to-have before public launch
 - [ ] **Google Sign-In** — `/v1/auth/google` is in the OpenAPI spec but stubbed; backend currently 501s. Needs GCP OAuth client + `google-auth-library` + account-linking flow (what if a user signed up with email then later logs in via Google with the same email?).
@@ -32,14 +32,18 @@ urgent for closed beta; all are in scope before public launch.
 - [ ] **Account deletion flow** — GDPR Article 17 right to erasure. Two-step (request + confirm) with 30-day cooldown.
 - [ ] **Data export** — GDPR Article 20 right to data portability. JSON / CSV download of every row tied to the user.
 
-## 🚀 Infrastructure / Phase 2.5 (deploy)
+## 🚀 Infrastructure / deploy
 
-- [ ] **AWS deployment to `api.staging.kehdo.app`** — ECS or App Runner; ~$30-40/mo (RDS Postgres `db.t4g.micro` + ElastiCache Redis + ECS task)
-- [ ] **AWS deployment to `api.kehdo.app`** — production tier
-- [ ] **Terraform** for the AWS infra
-- [ ] **CI workflow** to build + push Docker images on develop / main
-- [ ] **Postgres backup + PITR** strategy (RDS auto-backups + manual snapshot pre-migration runbook)
-- [ ] **Datadog / Sentry** — error tracking + APM. Sentry's free tier covers 5K events/mo.
+**Staging (DONE in Phase 5):** `api.staging.kehdo.app` runs on Fly.io
+free tier — see [/docs/STAGING_DEPLOYMENT.md](STAGING_DEPLOYMENT.md). CI auto-deploys
+on every merge to `develop` via [`.github/workflows/deploy-staging.yml`](../.github/workflows/deploy-staging.yml).
+
+Still deferred:
+- [ ] **Production tier** at `api.kehdo.app` — separate `fly.production.toml` (or graduate to AWS ECS/Fargate when budget allows; ~$30-40/mo with RDS Postgres `db.t4g.micro` + ElastiCache Redis)
+- [ ] **Terraform** for the production infra (Fly's CLI is fine for staging)
+- [ ] **Postgres backup + PITR** strategy (Fly free Postgres has none; production tier needs RDS auto-backups + manual snapshot pre-migration runbook)
+- [ ] **Datadog / Sentry** — error tracking + APM. Sentry's free tier covers 5K events/mo. Currently relying on `fly logs` for staging.
+- [ ] **Cert pinning on Android** for production builds against `api.kehdo.app` — `:core:network`'s OkHttp config already has the TODO.
 
 ## 🤖 AI pipeline — Phase 4
 
@@ -73,20 +77,28 @@ Implements ADR 0006's 5-phase roadmap. Inside `:ai/`:
 - [ ] **Hindi / Spanish / Portuguese translations** of the landing page (`design/copy/{hi,es,pt}.json` exist but the web layer doesn't render them yet — `next-intl` setup needed)
 - [ ] **Add `/api/waitlist`-equivalent landing-side rate limiting** to prevent the Apps Script webhook from being hammered
 
+## 💳 Paywall / billing — Phase 6 (post-staging-validation)
+
+`:feature:paywall` and the backend `/billing/*` surface are out of scope
+for Phase 5; we want to validate the core conversation loop on staging
+with the free tier first.
+
+- [ ] **Play Billing client** in `:feature:paywall` — purchase flow, restore purchases, receipt validation
+- [ ] **Backend `/billing/play-purchase`** — verify Play receipt server-side, flip user plan to PRO/UNLIMITED
+- [ ] **`/billing/cancel`** + downgrade-on-period-end logic
+- [ ] **Apple In-App Purchase** equivalent — when iOS launches
+
 ## 📱 Android — Phase 3 follow-ups (post-scaffold)
 
 To be expanded as Phase 3 progresses; these are known gaps that won't all
 fit in the initial scaffold PRs:
 
-- [ ] **Generate Retrofit client** from `/contracts/openapi/kehdo.v1.yaml` via `tools/generate-clients.sh`
+- [ ] **Generate Retrofit client** from `/contracts/openapi/kehdo.v1.yaml` via `tools/generate-clients.sh` — currently hand-rolled `ConversationApi.kt` + `AuthApi.kt`
 - [ ] **Generate design tokens** for Android via `tools/generate-tokens.sh` → `core-ui/AuroraColors.kt`
-- [ ] **Aurora theme** wired into `:core:ui`
-- [ ] **Onboarding screens** porting the design from `web/src/app/page.tsx`'s hero section
-- [ ] **Auth flow** — sign in / sign up screens calling `/v1/auth/*`
-- [ ] **EncryptedSharedPreferences** for refresh-token storage
-- [ ] **Cert pinning** for production builds against `api.kehdo.app`
-- [ ] **Paparazzi snapshot tests** for `:core:ui` components
+- [ ] **Aurora theme** wired into `:core:ui` — screens currently reach `AuroraColors.*` directly with no `KehdoTheme {}` wrapper
+- [ ] **Paparazzi snapshot tests** for `:core:ui` components — Android `CLAUDE.md` mandates them but Phase 4/5 PRs didn't add any
 - [ ] **Firebase Test Lab** wiring in CI (Pixel 6 + Pixel 4 + Samsung A13)
+- [ ] **Account deletion** flow on the Profile screen — currently shown as "coming soon"; needs GDPR Article 17 confirm + 30-day cooldown
 
 ## 📱 iOS — Phase 6+ scope
 

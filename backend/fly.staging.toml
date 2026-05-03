@@ -1,0 +1,67 @@
+# ============================================================
+# kehdo backend — Fly.io staging deployment
+# ============================================================
+# Used by `fly deploy --config fly.staging.toml` (run from backend/).
+#
+# This is the staging environment behind api.staging.kehdo.app. Free
+# tier territory: 1 shared-cpu-1x VM (~256MB billed at $0/mo for the
+# first three machines), Fly Postgres on the free shared cluster,
+# Upstash Redis free tier (10K commands/day).
+#
+# Production tier (api.kehdo.app) gets its own fly.production.toml
+# when budget allows — see /docs/BACKLOG.md.
+# ============================================================
+
+app = "kehdo-backend-staging"
+primary_region = "bom"  # Mumbai — closest to the Indian launch market
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  SPRING_PROFILES_ACTIVE = "staging"
+  # Java tuning is in Dockerfile ENTRYPOINT — keep flag-free here so
+  # Spring's BUILDPACK_*_OPTIONS don't double-up.
+
+# Spring Boot Actuator's /v1/actuator/health needs a longer warm-up
+# than Fly's default 30s; Hibernate + Flyway pull in ~10s of startup
+# even on a warm container. Give it 60s before the first probe runs.
+[[services]]
+  protocol = "tcp"
+  internal_port = 8080
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+    force_https = true
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  [services.concurrency]
+    type = "requests"
+    soft_limit = 50
+    hard_limit = 75
+
+  [[services.http_checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "60s"
+    method = "get"
+    path = "/v1/actuator/health"
+    protocol = "http"
+
+[deploy]
+  strategy = "rolling"
+  release_command = "echo 'Flyway runs at app startup — no separate release step needed'"
+
+[[mounts]]
+  # Persistent volume for any disk-cached artifacts (e.g. local screenshot
+  # cache during processing). Keep it small for staging — 1GB is plenty.
+  source = "kehdo_staging_data"
+  destination = "/data"
