@@ -3,10 +3,13 @@
 # ============================================================
 # Used by `fly deploy --config fly.staging.toml` (run from backend/).
 #
-# This is the staging environment behind api.staging.kehdo.app. Free
-# tier territory: 1 shared-cpu-1x VM (~256MB billed at $0/mo for the
-# first three machines), Fly Postgres on the free shared cluster,
-# Upstash Redis free tier (10K commands/day).
+# This is the staging environment behind api.staging.kehdo.app.
+# shared-cpu-1x with 1GB RAM (~$4/mo on pay-as-you-go), Fly Postgres
+# on the free shared cluster, Upstash Redis free tier (10K cmds/day).
+# Free tier covers up to 3 256MB machines, but Spring Boot 3.2 +
+# Hibernate + Vertex AI / Cloud Vision / AWS S3 SDKs together OOM
+# during bean init at 256MB. 1GB is the smallest size that boots
+# cleanly with our dependency footprint.
 #
 # Production tier (api.kehdo.app) gets its own fly.production.toml
 # when budget allows — see /docs/BACKLOG.md.
@@ -17,6 +20,14 @@ primary_region = "bom"  # Mumbai — closest to the Indian launch market
 
 [build]
   dockerfile = "Dockerfile"
+
+# Pin VM size in config (Fly defaults to 256MB shared-cpu-1x otherwise).
+# `fly scale memory 1024` resizes a running machine, but new machines
+# created without [[vm]] revert to the default — this block makes it
+# stick across rolls.
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "1gb"
 
 [env]
   SPRING_PROFILES_ACTIVE = "staging"
