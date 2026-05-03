@@ -5,14 +5,18 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 
 fun NavGraphBuilder.homeGraph(
-    onStartNewReply: () -> Unit = {}
+    onStartNewReply: () -> Unit = {},
+    onOpenProfile: () -> Unit = {}
 ) {
     navigation(
         route = HomeRoute.GRAPH,
         startDestination = HomeRoute.HOME
     ) {
         composable(HomeRoute.HOME) {
-            HomeScreenRoute(onStartNewReply = onStartNewReply)
+            HomeScreenRoute(
+                onStartNewReply = onStartNewReply,
+                onOpenProfile = onOpenProfile
+            )
         }
     }
 }
