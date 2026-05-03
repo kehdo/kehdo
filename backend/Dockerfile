@@ -18,7 +18,11 @@ COPY infra ./infra
 COPY common ./common
 COPY contracts-openapi ./contracts-openapi
 
-RUN chmod +x ./gradlew && ./gradlew :app:bootJar --no-daemon
+# Strip CRLF from gradlew before exec — Windows clones with
+# core.autocrlf=true commit LF but check out CRLF, and Alpine's sh can't
+# run a script whose shebang ends with \r (kernel looks for an
+# interpreter named "sh\r" and fails with a misleading "not found").
+RUN sed -i 's/\r$//' gradlew && chmod +x ./gradlew && ./gradlew :app:bootJar --no-daemon
 
 # ---- Runtime stage ----
 FROM eclipse-temurin:21-jre-alpine
