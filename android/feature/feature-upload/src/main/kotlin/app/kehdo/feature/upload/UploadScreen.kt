@@ -19,7 +19,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -69,9 +71,16 @@ internal fun UploadScreen(
         if (uri != null) onEvent(UploadEvent.ScreenshotPicked(uri.toString()))
     }
 
+    // The screenshot picker is a 0.66 aspect-ratio box that takes ~2/3 of
+    // a tall phone's height; on top of headers, mode chips, tones list,
+    // error text, the Generate button, and the quota footer, content
+    // easily exceeds 100vh. Wrap in verticalScroll so everything stays
+    // reachable on every form factor — a regular Column without scroll
+    // hides the Generate button on tall layouts.
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 32.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
