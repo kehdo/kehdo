@@ -14,11 +14,13 @@ import app.kehdo.domain.conversation.ConversationStatus
 import app.kehdo.domain.conversation.HistoryPage
 import app.kehdo.domain.conversation.Tone
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -178,25 +180,38 @@ class RealConversationRepository @Inject constructor(
 
     // ---- helpers ----------------------------------------------------------
 
-    private suspend fun uploadScreenshot(presignedUrl: String, uri: Uri): Outcome<Unit> {
-        return try {
+    // The S3 PUT here is a synchronous OkHttp Call.execute(), and the read
+    // from the content URI is blocking disk I/O. Even though this is a
+    // `suspend` function, the calling coroutine in the upload flow is on
+    // Dispatchers.Main.immediate (Compose ViewModel scope) — without an
+    // explicit IO dispatcher, StrictMode kills the app with
+    // NetworkOnMainThreadException on the DNS lookup. withContext(IO)
+    // shifts both the file read and the network call off the main thread.
+    private suspend fun uploadScreenshot(
+        presignedUrl: String,
+        uri: Uri
+    ): Outcome<Unit> = withContext(Dispatchers.IO) {
+        try {
             val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
-                ?: return Outcome.failure(
+                ?: return@withContext Outcome.failure(
                     KehdoError.ParsingFailed("Couldn't read screenshot bytes from $uri")
                 )
-            // Backend signed the URL with image content type; sending a
-            // different type would fail the signature. Match exactly.
-            val mediaType = "image/*".toMediaTypeOrNull()
+            // The backend signs the presigned URL with Content-Type: image/png
+            // (S3ScreenshotStorage). The signed-headers include `content-type`,
+            // so anything other than the exact string `image/png` fails the
+            // signature with 403. We always send `image/png` regardless of the
+            // file's real format — S3 doesn't sniff bytes, and Cloud Vision OCR
+            // detects format from the bytes anyway.
+            val mediaType = "image/png".toMediaTypeOrNull()
             val request = Request.Builder()
                 .url(presignedUrl)
                 .put(bytes.toRequestBody(mediaType))
                 .build()
-            val response = uploadClient.newCall(request).execute()
-            response.use {
-                if (!it.isSuccessful) {
-                    return Outcome.failure(
+            uploadClient.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) {
+                    return@withContext Outcome.failure(
                         KehdoError.Server(
-                            code = "UPLOAD_FAILED_${it.code}",
+                            code = "UPLOAD_FAILED_${response.code}",
                             message = "Screenshot upload rejected by storage"
                         )
                     )
