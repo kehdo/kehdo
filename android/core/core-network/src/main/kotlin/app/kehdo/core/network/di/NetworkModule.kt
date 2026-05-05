@@ -42,10 +42,17 @@ object NetworkModule {
         authInterceptor: AuthInterceptor,
         authenticator: TokenRefreshAuthenticator
     ): OkHttpClient {
+        // /v1/conversations/{id}/generate is the slowest endpoint by an
+        // order of magnitude — Cloud Vision OCR (~3-5s) + Vertex AI Gemini /
+        // OpenAI failover (~5-15s) + OpenAI moderation (~1-2s), all serial,
+        // can take 30+ seconds on a warm path and 60+ on cold start. The
+        // backend's own circuit breakers cap each external hop, so a 90s
+        // client read budget bounds the worst-case round trip while still
+        // giving the pipeline room to breathe. /refine has the same shape.
         val builder = OkHttpClient.Builder()
             .connectTimeout(15, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .writeTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(90, TimeUnit.SECONDS)
+            .writeTimeout(90, TimeUnit.SECONDS)
             .addInterceptor(authInterceptor)
             .authenticator(authenticator)
 
