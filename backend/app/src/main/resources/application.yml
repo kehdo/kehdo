@@ -126,7 +126,10 @@ kehdo:
       moderation-model: ${OPENAI_MODERATION_MODEL:omni-moderation-latest}
       role: failover
     google-vision:
-      credentials-path: ${GOOGLE_APPLICATION_CREDENTIALS:}
+      # Cloud Vision uses a Cloud Console API key (AIzaSy...) restricted to
+      # the Vision API. Reads via REST, not gRPC, so no service-account JSON
+      # is needed — works around Google's "Secure by Default" org policy.
+      api-key: ${KEHDO_GCP_VISION_KEY:}
 
 # Resilience4j — gate around every external AI call per backend/CLAUDE.md
 # AI rule 4. Phase 4 PR 7+ wires Vertex AI / OpenAI / Cloud Vision behind

@@ -1,70 +1,85 @@
 package app.kehdo.backend.ai.ocr;
 
 import app.kehdo.backend.infra.storage.ScreenshotStorage;
-import com.google.cloud.vision.v1.AnnotateImageRequest;
-import com.google.cloud.vision.v1.AnnotateImageResponse;
-import com.google.cloud.vision.v1.BatchAnnotateImagesResponse;
-import com.google.cloud.vision.v1.Block;
-import com.google.cloud.vision.v1.BoundingPoly;
-import com.google.cloud.vision.v1.ImageAnnotatorClient;
-import com.google.cloud.vision.v1.Page;
-import com.google.cloud.vision.v1.Paragraph;
-import com.google.cloud.vision.v1.Symbol;
-import com.google.cloud.vision.v1.TextAnnotation;
-import com.google.cloud.vision.v1.Vertex;
-import com.google.cloud.vision.v1.Word;
-import com.google.rpc.Status;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
-import java.util.List;
+import java.lang.reflect.Field;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Unit-level coverage for {@link CloudVisionOcrService}. Mocks
- * {@link ImageAnnotatorClient} so the test never makes a network call.
+ * Unit-level coverage for {@link CloudVisionOcrService}. Mocks the
+ * {@link HttpClient} so the test never makes a network call.
  * Resilience4j retry/circuit-breaker decorators are off in tests (no
  * Spring context), which is fine — those concerns are integration-level
  * and tested separately.
  */
 class CloudVisionOcrServiceTest {
 
-    private ImageAnnotatorClient client;
+    private HttpClient http;
     private ScreenshotStorage storage;
     private CloudVisionOcrService service;
 
     @BeforeEach
-    void setUp() {
-        client = mock(ImageAnnotatorClient.class);
+    void setUp() throws Exception {
+        http = mock(HttpClient.class);
         storage = mock(ScreenshotStorage.class);
-        service = new CloudVisionOcrService(client, storage);
+        service = new CloudVisionOcrService(storage, new ObjectMapper(), "test-api-key");
+        // Inject the mocked HttpClient over the one the constructor builds.
+        Field field = CloudVisionOcrService.class.getDeclaredField("http");
+        field.setAccessible(true);
+        field.set(service, http);
     }
 
     @Test
-    void downloads_bytes_then_calls_vision_with_document_text_detection_feature() {
+    void downloads_bytes_then_calls_vision_with_document_text_detection_feature() throws Exception {
         when(storage.download("conv/abc/screenshot.png")).thenReturn(new byte[]{1, 2, 3});
-        when(client.batchAnnotateImages(anyList())).thenReturn(responseWith(
-                blockAt(50, 0, 200, "Priya Sharma"),                   // header
-                blockAt(200, 40, 480, "Hey are you free tonight?"),    // left bubble (THEM)
-                blockAt(280, 560, 1000, "Yeah 7pm")));                  // right bubble (ME)
+
+        // Three blocks: header (top), left bubble (THEM), right bubble (ME).
+        String responseJson = """
+                {
+                  "responses": [{
+                    "fullTextAnnotation": {
+                      "pages": [{
+                        "confidence": 0.95,
+                        "blocks": [
+                          %s,
+                          %s,
+                          %s
+                        ]
+                      }]
+                    }
+                  }]
+                }""".formatted(
+                blockJson(0, 50, 200, "Priya Sharma"),
+                blockJson(40, 200, 480, "Hey are you free tonight?"),
+                blockJson(560, 280, 1000, "Yeah 7pm"));
+
+        HttpResponse<String> mockResponse = mockResponse(200, responseJson);
+        when(http.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                .thenReturn(mockResponse);
 
         OcrResult result = service.read("conv/abc/screenshot.png");
 
-        ArgumentCaptor<List<AnnotateImageRequest>> captor = ArgumentCaptor.forClass(List.class);
-        verify(client).batchAnnotateImages(captor.capture());
-        List<AnnotateImageRequest> sent = captor.getValue();
+        ArgumentCaptor<HttpRequest> captor = ArgumentCaptor.forClass(HttpRequest.class);
+        verify(http).send(captor.capture(), any(HttpResponse.BodyHandler.class));
+        HttpRequest sent = captor.getValue();
 
-        assertThat(sent).hasSize(1);
-        assertThat(sent.get(0).getFeaturesList()).hasSize(1);
-        assertThat(sent.get(0).getFeatures(0).getType().name()).isEqualTo("DOCUMENT_TEXT_DETECTION");
-        assertThat(sent.get(0).getImage().getContent().toByteArray()).containsExactly(1, 2, 3);
+        assertThat(sent.uri().toString())
+                .startsWith("https://vision.googleapis.com/v1/images:annotate?key=test-api-key");
+        assertThat(sent.method()).isEqualTo("POST");
+        assertThat(sent.headers().firstValue("Content-Type")).contains("application/json");
 
         assertThat(result.lines()).extracting(OcrLine::text).containsExactly(
                 "Priya Sharma",
@@ -79,11 +94,21 @@ class CloudVisionOcrServiceTest {
     }
 
     @Test
-    void filters_phone_number_in_header() {
+    void filters_phone_number_in_header() throws Exception {
         when(storage.download(any())).thenReturn(new byte[]{1});
-        when(client.batchAnnotateImages(anyList())).thenReturn(responseWith(
-                blockAt(50, 0, 200, "+91 98765 43210"),       // header is a phone
-                blockAt(400, 40, 480, "Message body")));
+        String json = """
+                {"responses":[{"fullTextAnnotation":{"pages":[{
+                  "confidence":0.9,
+                  "blocks":[%s, %s]
+                }]}}]}""".formatted(
+                blockJson(0, 50, 200, "+91 98765 43210"),
+                blockJson(40, 400, 480, "Message body"));
+        // Build the canned response before calling when() — mockResponse()
+        // does its own stubbing internally, so calling it inside a parent
+        // when().thenReturn() trips Mockito's UnfinishedStubbingException.
+        HttpResponse<String> ok = mockResponse(200, json);
+        when(http.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                .thenReturn(ok);
 
         OcrResult result = service.read("anything");
 
@@ -91,13 +116,13 @@ class CloudVisionOcrServiceTest {
     }
 
     @Test
-    void empty_text_response_yields_empty_lines_list() {
+    void empty_text_response_yields_empty_lines_list() throws Exception {
         when(storage.download(any())).thenReturn(new byte[]{1});
-        when(client.batchAnnotateImages(anyList())).thenReturn(BatchAnnotateImagesResponse.newBuilder()
-                .addResponses(AnnotateImageResponse.newBuilder()
-                        .setFullTextAnnotation(TextAnnotation.newBuilder().setText("").build())
-                        .build())
-                .build());
+        String json = """
+                {"responses":[{"fullTextAnnotation":{"pages":[{"confidence":0.5,"blocks":[]}]}}]}""";
+        HttpResponse<String> ok = mockResponse(200, json);
+        when(http.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                .thenReturn(ok);
 
         OcrResult result = service.read("anything");
 
@@ -106,48 +131,80 @@ class CloudVisionOcrServiceTest {
     }
 
     @Test
-    void per_image_error_throws_so_circuit_breaker_counts_it() {
+    void per_image_error_throws_so_circuit_breaker_counts_it() throws Exception {
         when(storage.download(any())).thenReturn(new byte[]{1});
-        when(client.batchAnnotateImages(anyList())).thenReturn(BatchAnnotateImagesResponse.newBuilder()
-                .addResponses(AnnotateImageResponse.newBuilder()
-                        .setError(Status.newBuilder().setMessage("Image dimensions are invalid"))
-                        .build())
-                .build());
+        String json = """
+                {"responses":[{"error":{"code":3,"message":"Image dimensions are invalid"}}]}""";
+        HttpResponse<String> ok = mockResponse(200, json);
+        when(http.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                .thenReturn(ok);
 
         assertThatThrownBy(() -> service.read("anything"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Image dimensions are invalid");
     }
 
-    // ---- helpers -------------------------------------------------------
+    @Test
+    void non_200_http_status_throws() throws Exception {
+        when(storage.download(any())).thenReturn(new byte[]{1});
+        HttpResponse<String> denied = mockResponse(403, "{\"error\":{\"message\":\"API key not authorized\"}}");
+        when(http.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                .thenReturn(denied);
 
-    private static <T> T any() { return org.mockito.ArgumentMatchers.any(); }
-
-    private static BatchAnnotateImagesResponse responseWith(Block... blocks) {
-        Page.Builder page = Page.newBuilder().setConfidence(0.95f);
-        for (Block b : blocks) page.addBlocks(b);
-        AnnotateImageResponse response = AnnotateImageResponse.newBuilder()
-                .setFullTextAnnotation(TextAnnotation.newBuilder()
-                        .addPages(page)
-                        .build())
-                .build();
-        return BatchAnnotateImagesResponse.newBuilder().addResponses(response).build();
+        assertThatThrownBy(() -> service.read("anything"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("HTTP 403");
     }
 
-    /** @param top vertical position; @param leftX/rightX horizontal extent of the bubble. */
-    private static Block blockAt(int top, int leftX, int rightX, String text) {
-        Word.Builder word = Word.newBuilder();
-        for (char c : text.toCharArray()) {
-            word.addSymbols(Symbol.newBuilder().setText(String.valueOf(c)).build());
+    // ---- helpers -------------------------------------------------------
+
+    @SuppressWarnings("unchecked")
+    private static HttpResponse<String> mockResponse(int statusCode, String body) {
+        HttpResponse<String> response = mock(HttpResponse.class);
+        when(response.statusCode()).thenReturn(statusCode);
+        when(response.body()).thenReturn(body);
+        return response;
+    }
+
+    /**
+     * Builds one Vision-API "block" JSON node. The bounding box is a
+     * rectangle with vertices at (leftX, top), (rightX, top),
+     * (rightX, top + 30), (leftX, top + 30). Each character becomes a
+     * symbol inside one word inside one paragraph — same shape as the
+     * old protobuf-based fixture.
+     */
+    private static String blockJson(int top, int leftX, int rightX, String text) {
+        StringBuilder symbols = new StringBuilder();
+        for (int i = 0; i < text.length(); i++) {
+            if (i > 0) symbols.append(',');
+            char c = text.charAt(i);
+            // Escape backslash and quote for JSON safety; spaces and
+            // common punctuation pass through.
+            String escaped = switch (c) {
+                case '"' -> "\\\"";
+                case '\\' -> "\\\\";
+                default -> String.valueOf(c);
+            };
+            symbols.append("{\"text\":\"").append(escaped).append("\"}");
         }
-        return Block.newBuilder()
-                .setBoundingBox(BoundingPoly.newBuilder()
-                        .addVertices(Vertex.newBuilder().setX(leftX).setY(top).build())
-                        .addVertices(Vertex.newBuilder().setX(rightX).setY(top).build())
-                        .addVertices(Vertex.newBuilder().setX(rightX).setY(top + 30).build())
-                        .addVertices(Vertex.newBuilder().setX(leftX).setY(top + 30).build())
-                        .build())
-                .addParagraphs(Paragraph.newBuilder().addWords(word).build())
-                .build();
+        return """
+                {
+                  "boundingBox": {
+                    "vertices": [
+                      {"x": %d, "y": %d},
+                      {"x": %d, "y": %d},
+                      {"x": %d, "y": %d},
+                      {"x": %d, "y": %d}
+                    ]
+                  },
+                  "paragraphs": [{
+                    "words": [{"symbols": [%s]}]
+                  }]
+                }""".formatted(
+                leftX, top,
+                rightX, top,
+                rightX, top + 30,
+                leftX, top + 30,
+                symbols);
     }
 }
