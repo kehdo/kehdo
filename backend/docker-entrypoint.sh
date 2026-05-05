@@ -31,7 +31,18 @@ if [ -n "${KEHDO_GCP_CREDENTIALS_B64:-}" ]; then
         echo "$KEHDO_GCP_CREDENTIALS_B64" | base64 --decode > "$CREDS_PATH"
     fi
     chmod 600 "$CREDS_PATH"
+    # Always export GOOGLE_APPLICATION_CREDENTIALS for the JVM. Without
+    # this, Google's Application Default Credentials chain falls past
+    # the file-path step and tries the GCE metadata server, which Fly
+    # doesn't have, producing
+    #   io.grpc.StatusRuntimeException:
+    #     UNAVAILABLE: Credentials failed to obtain metadata
+    # from Cloud Vision and Vertex AI calls. Exporting the path here
+    # guarantees the JVM sees the same value regardless of whether the
+    # GOOGLE_APPLICATION_CREDENTIALS fly secret was set explicitly.
+    export GOOGLE_APPLICATION_CREDENTIALS="$CREDS_PATH"
     echo "[entrypoint] GCP credentials materialised at $CREDS_PATH"
+    echo "[entrypoint] GOOGLE_APPLICATION_CREDENTIALS exported for JVM"
 else
     echo "[entrypoint] KEHDO_GCP_CREDENTIALS_B64 not set; assuming local-dev or stub-mode AI"
 fi
