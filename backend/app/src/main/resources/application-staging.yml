@@ -69,26 +69,24 @@ kehdo:
 
   ai:
     ocr:
-      provider: gcp
+      provider: gcp             # REST + API key, see google-vision.api-key
     llm:
-      provider: failover        # Vertex primary + OpenAI fallback
+      # OpenAI-only on staging until we re-add Vertex via API key. The
+      # Vertex AI Gemini SDK needs a service-account JSON or workload
+      # identity, both blocked by Google's "Secure by Default" org policy
+      # on free-tier organisations. OpenAI gpt-4o-mini is a fine primary
+      # for now and was already wired as the failover.
+      provider: openai
     speaker:
       provider: stub            # Heuristic still, full LLM-backed ships later
     moderation:
       provider: openai
-    vertex:
-      project-id: ${VERTEX_PROJECT_ID}
-      location: ${VERTEX_LOCATION:asia-south1}
-      model: ${VERTEX_MODEL:gemini-2.0-flash}
-      # When the GOOGLE_APPLICATION_CREDENTIALS env var points at a JSON
-      # file mounted from secrets, the Google SDK picks it up automatically.
-      credentials-path: ${GOOGLE_APPLICATION_CREDENTIALS:}
     openai:
       api-key: ${OPENAI_API_KEY}
       model: ${OPENAI_MODEL:gpt-4o-mini}
       moderation-model: ${OPENAI_MODERATION_MODEL:omni-moderation-latest}
     google-vision:
-      credentials-path: ${GOOGLE_APPLICATION_CREDENTIALS:}
+      api-key: ${KEHDO_GCP_VISION_KEY}
 
 logging:
   level:
